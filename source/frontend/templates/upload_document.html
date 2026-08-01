@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if model_name %}{{ model_name }}{% else %}Upload Documents{% endif %} - QA Confirm Gate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=3">
+    <script src="/static/script.js"></script>
+    <script>
+        stopLockCountdown();
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('invalid_id')) {
+            sessionStorage.removeItem('selectedUploadChecklistId');
+            sessionStorage.removeItem('selectedHomeModelId');
+        }
+
+        {% if checklist_item %}
+        sessionStorage.setItem('selectedUploadChecklistId', '{{ checklist_item.id }}');
+        {% endif %}
+        
+        if (!"{{ model_name if model_name else '' }}" && !"{{ checklist_item.id if checklist_item else '' }}") {
+            const checklistId = sessionStorage.getItem('selectedUploadChecklistId');
+            if (checklistId) {
+                window.location.href = '/upload/' + checklistId;
+            } else {
+                const homeModelId = sessionStorage.getItem('selectedHomeModelId');
+                if (homeModelId && !window.location.search.includes('model_id')) {
+                    window.location.href = '/upload?model_id=' + homeModelId;
+                }
+            }
+        }
+    </script>
+    <script>
+        function selectDocument(id) {
+            window.location.href = '/upload/' + id;
+        }
+    </script>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+    <div class="flex flex-1 overflow-hidden">
+        <aside class="w-64 border-r border-gray-400 flex flex-col shrink-0 sidebar">
+            <div class="h-16 flex items-center px-4 border-b border-gray-400">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="text-lg font-bold tracking-wide">QA Confirm Gate</span>
+            </div>
+            <div class="flex-1 py-4 space-y-1">
+                <a href="/" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span>Home</span>
+                </a>
+                <a href="/upload" class="flex items-center space-x-3 px-4 py-3 bg-[#0a192f] text-white mx-2 font-bold rounded-md shadow">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <span>Upload Documents</span>
+                </a>
+                <a href="/setting" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>Model Config</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    <span>Feedback</span>
+                </a>
+                {% if current_user and current_user.access_role == 'Admin' %}
+                <a href="/admin" class="flex items-center space-x-3 px-4 py-3 mx-2 text-red-600 font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <span>Admin Management</span>
+                </a>
+                {% endif %}
+            </div>
+            <div class="mt-auto border-t border-gray-400 p-4 flex items-center space-x-3 bg-white">
+                <div class="w-10 h-10 rounded-full border border-black flex items-center justify-center font-bold text-sm bg-gray-100">
+                    AD
+                </div>
+                <div class="text-sm">
+                    <p class="font-bold">{{ current_user.fullname if current_user else 'Guest' }}</p>
+                    <p class="text-gray-600 text-xs">{{ current_user.email if current_user else 'guest@domain.com' }}</p>
+                </div>
+            </div>
+            <form action="/logout" method="POST" class="m-0 border-t border-gray-400 bg-[#cbd5e1] p-3">
+                <button type="submit" class="w-full flex items-center space-x-3 font-bold text-black hover:text-gray-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </aside>
+        <main class="flex-1 p-4 flex flex-col min-h-0 w-full overflow-hidden">
+    <div class="border-box flex-1 flex flex-col min-h-0">
+        <div class="p-3 flex flex-wrap items-center justify-between gap-4 shrink-0 border-b border-gray-400">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <h3 class="section-title">Upload Documents{% if model_name %} - {{ model_name }}{% endif %}</h3>
+            </div>
+            <div class="flex gap-2 items-center">
+                <span id="lock-timer" class="text-red-600 font-bold text-sm hidden mr-2"></span>
+                {% if checklist_item and current_user.access_role == 'Admin' %}
+                <button class="btn-action bg-red-600 text-white border-transparent" id="btn-cancel-upload" onclick="cancelUpload()">Cancel Upload</button>
+                <button class="btn-action bg-red-600 text-white border-transparent" id="btn-del-version" onclick="deleteVersion()">- Del</button>
+                {% endif %}
+                {% if checklist_item and (current_user.team == checklist_item.team or current_user.access_role == 'Admin') %}
+                <button class="btn-action border-transparent" id="btn-new-version" onclick="createNewVersion()">+ New</button>
+                <button class="btn-action" id="btn-edit" onclick="handleEditClick()">Edit</button>
+                <button class="btn-action" id="btn-save" onclick="saveVersion()">Save</button>
+                <button class="btn-action flex items-center gap-1 w-[100px]" id="btn-upload" onclick="uploadVersion()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    Upload
+                </button>
+                {% else %}
+                <button class="btn-action bg-gray-400 text-gray-700 border-transparent cursor-not-allowed" disabled id="btn-new-version">+ New</button>
+                <button class="btn-action bg-gray-400 text-gray-700 border-transparent cursor-not-allowed" disabled id="btn-edit">Edit</button>
+                <button class="btn-action bg-gray-400 text-gray-700 border-transparent cursor-not-allowed" disabled id="btn-save">Save</button>
+                <button class="btn-action flex items-center gap-1 bg-gray-400 text-gray-700 border-transparent cursor-not-allowed w-[100px]" disabled id="btn-upload">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    Upload
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        <div class="shrink-0 text-sm border-b border-gray-400 overflow-x-auto bg-white">
+            <table class="resizable">
+                <tbody>
+                    <tr>
+                        <th class="p-0 border-l-0 border-t-0 bg-white text-left font-bold text-black border-gray-400 w-auto min-w-[140px]">
+                            <div class="flex items-center"><div class="w-1.5 h-1.5 bg-black rounded-full mr-2"></div> Document Type</div>
+                        </th>
+                        <td class="p-0 border-t-0 text-center font-medium w-auto min-w-[150px] bg-gray-50">
+                            {% if allowed_items %}
+                                <select class="w-full bg-transparent outline-none cursor-pointer" onchange="if(this.value) window.location.href='/upload/' + this.value;">
+                                    <option value="">-- Select Document Type --</option>
+                                    {% for ai in allowed_items %}
+                                        <option value="{{ ai.id }}" 
+                                                style="color: {% if ai.role_type == 'upload' %}#2563eb{% elif ai.role_type == 'approval' %}#16a34a{% else %}black{% endif %}; font-weight: {% if ai.role_type != 'readonly' %}bold{% else %}normal{% endif %};"
+                                                {% if checklist_item and checklist_item.id == ai.id %}selected{% endif %}>
+                                            {{ ai.level_1 }}/{{ ai.level_2 }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                {% if checklist_item %}{{ checklist_item.level_1 }}/{{ checklist_item.level_2 }}{% else %}N/A{% endif %}
+                            {% endif %}
+                        </td>
+                        <th class="p-0 border-t-0 bg-white text-left font-bold text-black border-gray-400 w-auto min-w-[100px]">
+                            <div class="flex items-center"><div class="w-1.5 h-1.5 bg-black rounded-full mr-2"></div> Version</div>
+                        </th>
+                        <td class="p-0 border-t-0 text-center w-auto min-w-[100px]">
+                            <select id="version-select" class="excel-input text-center font-medium cursor-pointer" onchange="loadSelectedVersion()">
+                            </select>
+                        </td>
+                        <th class="p-0 border-t-0 bg-gray-50 text-left font-bold text-black border-gray-400 w-auto min-w-[120px]" rowspan="2">
+                            <div class="flex items-center justify-start h-full">
+                                <div class="w-1.5 h-1.5 bg-black rounded-none mr-2"></div> Attachment
+                            </div>
+                        </th>
+                        <td class="p-0 border-t-0 w-auto min-w-[220px]" rowspan="2">
+                            <div id="file-list" class="flex flex-col items-stretch gap-1 overflow-y-auto no-scrollbar max-h-[72px] text-xs w-full pr-1">
+                            </div>
+                        </td>
+                        <td class="p-0 pr-3 border-t-0 border-b border-gray-400 w-auto min-w-[100px] align-middle text-right bg-white">
+                            <button class="btn-action w-[100px] justify-center py-1 inline-flex bg-gray-400 text-gray-700 cursor-not-allowed" disabled id="btn-add-attachment" onclick="addAttachment()">+ Add files</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="p-0 border-l-0 border-b-0 bg-white text-left font-bold text-black border-gray-400 w-auto">
+                            <div class="flex items-center"><div class="w-1.5 h-1.5 bg-black rounded-full mr-2"></div> Main PIC</div>
+                        </th>
+                        <td class="p-0 border-b-0 text-center font-medium w-auto bg-gray-50" id="main-pic-display"></td>
+                        <th class="p-0 border-b-0 bg-white text-left font-bold text-black border-gray-400 w-auto">
+                            <div class="flex items-center"><div class="w-1.5 h-1.5 bg-black rounded-full mr-2"></div> Upload time</div>
+                        </th>
+                        <td class="p-0 border-b-0 text-center w-auto text-xs bg-gray-50" id="time-display"></td>
+                        <td class="p-0 pr-3 border-b-0 border-t-0 border-gray-400 w-auto min-w-[100px] align-middle text-right bg-white">
+                            <button class="btn-action w-[100px] justify-center py-1 inline-flex bg-gray-400 text-gray-700 cursor-not-allowed" disabled id="btn-del-attachment" onclick="delAttachment()">- Del files</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="flex-1 flex flex-col min-h-0 bg-white border-b border-gray-400">
+            <div id="editor-container" class="flex-1"></div>
+        </div>
+        <div class="flex flex-col h-[200px] shrink-0 bg-white">
+            <div class="flex items-center justify-between px-3 py-2 border-b border-gray-400 bg-white z-10 shrink-0">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    <h3 class="section-title">Confirmation Progress</h3>
+                </div>
+                  <div class="flex gap-2">
+                      <button class="btn-action bg-gray-400 text-gray-700 cursor-not-allowed" disabled id="btn-add-step" onclick="addProgressStep()">+ Add Step</button>
+                      <button class="btn-action bg-gray-400 text-gray-700 cursor-not-allowed" disabled id="btn-del-step" onclick="delProgressStep()">- Del Step</button>
+                      <button class="btn-action bg-gray-400 text-gray-700 cursor-not-allowed px-2 border-transparent" disabled id="btn-up-step" onclick="moveProgressStepUp()"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
+                      <button class="btn-action bg-gray-400 text-gray-700 cursor-not-allowed px-2 border-transparent" disabled id="btn-down-step" onclick="moveProgressStepDown()"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                      <button class="btn-action bg-gray-400 text-gray-700 cursor-not-allowed" disabled id="btn-confirm-step" onclick="openConfirmModal()">Confirm</button>
+                  </div>
+              </div>
+              <div class="overflow-auto flex-1 relative bg-white">
+                  <table class="text-center resizable w-full">
+                      <thead>
+                          <tr>
+                            <th class="sticky-header px-2 py-1 min-w-[60px] border-t-0 border-l-0">Step</th>
+                            <th class="sticky-header px-2 py-1 min-w-[120px] border-t-0">Progress</th>
+                            <th class="sticky-header px-2 py-1 min-w-[150px] border-t-0">Upload time</th>
+                            <th class="sticky-header px-2 py-1 min-w-[150px] border-t-0">Team</th>
+                            <th class="sticky-header px-2 py-1 min-w-[150px] border-t-0">Main PIC</th>
+                            <th class="sticky-header px-2 py-1 min-w-[200px] border-t-0">Comment</th>
+                            <th class="sticky-header px-2 py-1 w-[40px] border-t-0 border-r-0">Select</th>
+                        </tr>
+                      </thead>
+                    <tbody id="progress-tbody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+    </div>
+<input type="file" multiple id="attachment-input" style="display: none;" onchange="uploadAttachments()">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
+<script>
+    let tinyEditor = null;
+    tinymce.init({
+        selector: '#editor-container',
+        plugins: 'table lists link image paste code charmap',
+        menubar: false,
+        toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough superscript subscript | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table link image charmap | code',
+        paste_data_images: true,
+        automatic_uploads: true,
+        images_dataimg_filter: function(img) {
+            return true;
+        },
+        images_upload_handler: (blobInfo, progress) => new Promise((resolve, reject) => {
+            const file = blobInfo.blob();
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    // Convert to WebP base64
+                    const webpDataUrl = canvas.toDataURL('image/webp', 0.8);
+                    resolve(webpDataUrl);
+                };
+                img.onerror = () => reject('Invalid image');
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }),
+        readonly: true,
+        height: '100%',
+        promotion: false,
+        branding: false,
+        convert_urls: false,
+        setup: function (editor) {
+            tinyEditor = editor;
+            editor.on('init', function () {
+                if (typeof currentVersion !== 'undefined' && currentVersion) {
+                    editor.setContent(currentVersion.content || '');
+                }
+            });
+        }
+    });
+    let CHECKLIST_ID = {% if checklist_item %}{{ checklist_item.id }}{% else %}null{% endif %};
+    const CURRENT_TEAM = "{{ current_user.team }}";
+    const IS_UPLOADER = {% if checklist_item and (current_user.team == checklist_item.team or current_user.access_role == 'Admin') %}true{% else %}false{% endif %};
+    const IS_ADMIN = {% if current_user and current_user.access_role == 'Admin' %}true{% else %}false{% endif %};
+    const ACTIVE_TEAMS = {{ active_teams | tojson | safe if active_teams else '[]' }};
+    const MODEL_TEAMS = [
+        {% set unique_teams = [] %}
+        {% for ai in allowed_items %}
+            {% if ai.team not in unique_teams %}
+                "{{ ai.team }}",
+                {% set _ = unique_teams.append(ai.team) %}
+            {% endif %}
+        {% endfor %}
+    ];
+    let versionsData = [];
+    let currentVersion = null;
+    let isEditingMode = false;
+    let selectedFileId = null;
+    let pendingUploads = [];
+    let lockCountdownInterval = null;
+    
+    function startLockCountdown() {
+        const timerSpan = document.getElementById('lock-timer');
+        if (!timerSpan) return;
+        timerSpan.classList.remove('hidden');
+        timerSpan.classList.remove('animate-pulse');
+        let timeLeft = 1800; // 30 minutes in seconds
+        
+        if (lockCountdownInterval) clearInterval(lockCountdownInterval);
+        
+        const updateText = () => {
+            if (timeLeft <= 0) {
+                clearInterval(lockCountdownInterval);
+                timerSpan.textContent = "Time Out!";
+                timerSpan.classList.remove('animate-pulse');
+                return;
+            }
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            timerSpan.textContent = `Editing Time: ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        };
+        updateText();
+        lockCountdownInterval = setInterval(() => {
+            timeLeft--;
+            updateText();
+        }, 1000);
+    }
+    
+    function stopLockCountdown() {
+        if (lockCountdownInterval) clearInterval(lockCountdownInterval);
+        const timerSpan = document.getElementById('lock-timer');
+        if (timerSpan) timerSpan.classList.add('hidden');
+    }
+
+    let pendingDeletes = [];
+    async function loadData(autoEdit = false) {
+        if (isEditingMode && !autoEdit) {
+            await releaseLockAsync();
+        }
+        if (!CHECKLIST_ID) {
+            if (tinyEditor) tinyEditor.setContent('<p>Please select a document from the Home tab.</p>');
+            return;
+        }
+        try {
+            const res = await fetch('/api/documents/' + CHECKLIST_ID + '?t=' + Date.now());
+            versionsData = await res.json();
+            const select = document.getElementById('version-select');
+            select.innerHTML = '';
+            if (versionsData.length === 0) {
+                select.innerHTML = '<option value="">V01</option>';
+                document.getElementById('main-pic-display').textContent = '';
+                document.getElementById('time-display').textContent = '';
+                if (tinyEditor) tinyEditor.setContent('');
+                if (tinyEditor) tinyEditor.mode.set('readonly');
+                document.getElementById('progress-tbody').innerHTML = '';
+                currentVersion = null;
+                ['btn-edit', 'btn-save', 'btn-upload', 'btn-del-version', 'btn-add-attachment', 'btn-del-attachment'].forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                        btn.classList.remove('bg-red-600', 'text-white');
+                    }
+                });
+                return;
+            }
+            versionsData.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.id;
+                opt.textContent = v.version_no;
+                select.appendChild(opt);
+            });
+            if (versionsData.length > 0) {
+                select.value = versionsData[0].id;
+            }
+            loadSelectedVersion();
+            if (autoEdit) {
+                setTimeout(enableEdit, 100);
+                startLockCountdown();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+    function loadSelectedVersion() {
+        isEditingMode = false;
+        stopLockCountdown();
+        const select = document.getElementById('version-select');
+        let v_id = select.value;
+        if (!v_id.startsWith('V00_')) {
+            v_id = parseInt(v_id);
+        }
+        currentVersion = versionsData.find(v => v.id === v_id);
+        if (!currentVersion && versionsData.length > 0) {
+            currentVersion = versionsData[0];
+            select.value = currentVersion.id;
+        }
+        if (!currentVersion) return;
+        let picDisplay = currentVersion.uploader_username;
+        if (currentVersion.uploader_fullname && currentVersion.uploader_team) {
+            picDisplay = currentVersion.uploader_team + '/' + currentVersion.uploader_fullname + '/' + currentVersion.uploader_username;
+        } else if (currentVersion.uploader_fullname) {
+            picDisplay = currentVersion.uploader_fullname + '/' + currentVersion.uploader_username;
+        }
+        document.getElementById('main-pic-display').textContent = picDisplay;
+        if (currentVersion.status === 'Draft') {
+            document.getElementById('time-display').textContent = 'Pending';
+        } else {
+            document.getElementById('time-display').textContent = currentVersion.uploaded_at || 'N/A';
+        }
+        if (tinyEditor) tinyEditor.setContent(currentVersion.content || '');
+        if (tinyEditor) tinyEditor.mode.set('readonly');
+        renderProgress();
+
+        pendingUploads = [];
+        pendingDeletes = [];
+        renderFileList();
+
+        const isLatest = currentVersion && versionsData.length > 0 && versionsData[0].id === currentVersion.id;
+
+        const btnCancel = document.getElementById('btn-cancel-upload');
+        if (btnCancel) {
+            const isTemplate = currentVersion && currentVersion.status === 'Template';
+            if (currentVersion && currentVersion.status !== 'Draft' && !isTemplate && isLatest) {
+                btnCancel.disabled = false;
+                btnCancel.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                btnCancel.classList.add('bg-red-600', 'text-white');
+            } else {
+                btnCancel.disabled = true;
+                btnCancel.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                btnCancel.classList.remove('bg-red-600', 'text-white');
+            }
+        }
+
+        if (document.getElementById('btn-edit')) {
+            const isDraft = currentVersion && currentVersion.status === 'Draft';
+            const isTemplate = currentVersion && currentVersion.status === 'Template';
+            const canEdit = (isDraft && isLatest && IS_UPLOADER) || (isTemplate && IS_ADMIN);
+
+            const btnAddFile = document.getElementById('btn-add-attachment');
+            const btnDelFile = document.getElementById('btn-del-attachment');
+            if (btnAddFile && btnDelFile) {
+                btnAddFile.disabled = true;
+                btnDelFile.disabled = true;
+                btnAddFile.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                btnDelFile.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+            }
+
+            ['btn-edit', 'btn-upload'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    let enableBtn = canEdit;
+                    if (id === 'btn-upload' && isTemplate) enableBtn = false; // Cannot upload template
+                    
+                    btn.disabled = !enableBtn;
+                    if (!enableBtn) {
+                        btn.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                    } else {
+                        btn.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                    }
+                }
+            });
+
+            const btnSave = document.getElementById('btn-save');
+            if (btnSave) {
+                btnSave.disabled = true;
+                btnSave.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                btnSave.textContent = 'Save';
+            }
+            const btnDel = document.getElementById('btn-del-version');
+            if (btnDel && btnDel.hasAttribute('onclick')) {
+                btnDel.disabled = isTemplate ? true : false;
+                if (isTemplate) {
+                    btnDel.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                    btnDel.classList.remove('bg-red-600', 'text-white');
+                } else {
+                    btnDel.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                    btnDel.classList.add('bg-red-600', 'text-white');
+                }
+            }
+            const btnNew = document.getElementById('btn-new-version');
+            if (btnNew && btnNew.hasAttribute('onclick')) {
+                btnNew.disabled = !IS_UPLOADER;
+                if (!IS_UPLOADER) {
+                    btnNew.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                } else {
+                    btnNew.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                }
+            }
+        }
+    }
+    async function cancelUpload() {
+        if (!currentVersion) return;
+        if (!confirm('Bạn có chắc chắn muốn hủy tải lên phiên bản này và đưa nó về trạng thái Nháp? Mọi chữ ký phê duyệt sẽ bị xóa.')) return;
+        
+        try {
+            const res = await fetch('/api/documents/version/' + currentVersion.id + '/cancel_upload', {
+                method: 'POST'
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Đã hủy tải lên thành công!');
+                loadData();
+            } else {
+                alert(data.error || 'Có lỗi xảy ra');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Lỗi mạng');
+        }
+    }
+
+    async function handleEditClick() {
+        if (!currentVersion || (currentVersion.status !== 'Draft' && currentVersion.status !== 'Template')) {
+            alert('Cannot edit this version because it is already ' + (currentVersion ? currentVersion.status : 'empty'));
+            return;
+        }
+        
+        try {
+            const res = await fetch('/api/documents/' + CHECKLIST_ID + '/lock', { method: 'POST' });
+            const data = await res.json();
+            if (!data.success) {
+                alert(data.error || 'Có lỗi xảy ra');
+                return;
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Lỗi kết nối khi xin quyền sửa tài liệu.');
+            return;
+        }
+        
+        // Auto-reload data to get latest changes before entering edit mode
+        await loadData(true);
+    }
+
+    async function enableEdit() {
+        if (!currentVersion || (currentVersion.status !== 'Draft' && currentVersion.status !== 'Template')) {
+            return;
+        }
+        
+        ['btn-edit', 'btn-del-version', 'btn-cancel-upload', 'btn-new-version', 'btn-upload'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.disabled = true;
+                btn.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                btn.classList.remove('bg-red-600', 'text-white');
+            }
+        });
+        
+        const btnSave = document.getElementById('btn-save');
+        if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+        }
+        
+        const btnAddFile = document.getElementById('btn-add-attachment');
+        const btnDelFile = document.getElementById('btn-del-attachment');
+        if (btnAddFile && btnDelFile) {
+            btnAddFile.disabled = false;
+            btnDelFile.disabled = false;
+            btnAddFile.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+            btnDelFile.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+        }
+
+        if (tinyEditor) tinyEditor.mode.set('design');
+        if (tinyEditor) tinyEditor.focus();
+        
+        // Also enable the Add Step button if IS_UPLOADER
+        isEditingMode = true;
+        updateProgressButtons();
+    }
+    async function createNewVersion() {
+        if (currentVersion && currentVersion.status !== 'Rejected') { if (!confirm('Bạn có chắc chắn muốn tạo phiên bản mới hay không?')) return; }
+        if (!CHECKLIST_ID) {
+            alert("Lỗi: Không tìm thấy ID hạng mục!");
+            return;
+        }
+        
+        try {
+            const lockRes = await fetch('/api/documents/' + CHECKLIST_ID + '/lock', { method: 'POST' });
+            const lockData = await lockRes.json();
+            if (!lockData.success) {
+                alert(lockData.error || 'Có lỗi xảy ra');
+                return;
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Lỗi kết nối khi xin quyền tạo tài liệu.');
+            return;
+        }
+        
+        try {
+            const res = await fetch('/api/documents/' + CHECKLIST_ID + '/version', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: '' })
+            });
+            if (res.ok) {
+                await loadData(true);
+                startLockCountdown();
+            } else {
+                const text = await res.text();
+                alert("Lỗi server: " + res.status + " " + text);
+            }
+        } catch (e) {
+            alert("Lỗi kết nối/trình duyệt: " + e.message);
+            console.error(e);
+        }
+    }
+    async function rewriteVersion() {
+        if (!currentVersion || !CHECKLIST_ID) return;
+        if (currentVersion.status !== 'Rejected') {
+            if (!confirm('Bạn có chắc chắn muốn phát hành phiên bản mới hay không?')) return;
+        }
+        try {
+            const res = await fetch('/api/documents/' + CHECKLIST_ID + '/rewrite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (res.ok) {
+                loadData();
+                alert('Rewrite successful! New version created.');
+            } else {
+                const text = await res.text();
+                alert("Error: " + res.status + " " + text);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+    async function performSave() {
+        if (!currentVersion) return false;
+        
+        const isTemplate = currentVersion.status === 'Template';
+        
+        if (!isTemplate) {
+            // Save Progress Steps
+            const steps = getProgressStepsData();
+            try {
+                const resSteps = await fetch('/api/documents/version/' + currentVersion.id + '/progress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ steps })
+                });
+                const dataSteps = await resSteps.json();
+                if (!dataSteps.success) {
+                    alert('Lỗi lưu Progress: ' + dataSteps.error);
+                    return false;
+                }
+            } catch(e) { 
+                console.error(e); 
+                alert('Network error while saving progress steps');
+                return false;
+            }
+        }
+
+        const content = tinyEditor ? tinyEditor.getContent() : '';
+        try {
+            const res = await fetch('/api/documents/version/' + currentVersion.id + '/content', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (pendingDeletes.length > 0) {
+                    await Promise.all(pendingDeletes.map(id => 
+                        fetch('/api/documents/version/files/' + id, { method: 'DELETE' })
+                    ));
+                }
+                
+                if (pendingUploads.length > 0) {
+                    const formData = new FormData();
+                    for (let i = 0; i < pendingUploads.length; i++) {
+                        formData.append('files', pendingUploads[i]);
+                    }
+                    await fetch('/api/documents/version/' + currentVersion.id + '/files', {
+                        method: 'POST',
+                        body: formData
+                    });
+                }
+                return true;
+            }
+            return false;
+        } catch(e) { 
+            console.error(e); 
+            return false;
+        }
+    }
+
+    async function saveVersion() {
+        if (await performSave()) {
+            alert('Saved successfully');
+            loadData();
+        }
+    }
+    async function uploadVersion() {
+        if (!currentVersion || currentVersion.status !== 'Draft') return;
+        if (!confirm('Bạn có chắc chắn muốn Submit tài liệu này để các bộ phận khác vào xác nhận?')) return;
+        
+        // Optimistically disable buttons to prevent double-click and give immediate UI feedback
+        ['btn-edit', 'btn-save', 'btn-upload'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.disabled = true;
+        });
+        
+        if (!(await performSave())) {
+            // Restore if save failed
+            ['btn-edit', 'btn-save', 'btn-upload'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.disabled = false;
+            });
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/documents/version/' + currentVersion.id + '/submit', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                alert('Submitted successfully!');
+                loadData();
+            } else {
+                alert(data.error || 'Có lỗi xảy ra');
+                // Khôi phục lại trạng thái nút
+                ['btn-edit', 'btn-upload'].forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) btn.disabled = false;
+                });
+            }
+        } catch(e) { console.error(e); }
+    }
+    async function deleteVersion() {
+        if (!currentVersion) return;
+        if (!confirm('CẢNH BÁO: Bạn có chắc chắn muốn XÓA VĨNH VIỄN version này cùng toàn bộ nội dung của nó? Thao tác này không thể hoàn tác!')) return;
+        try {
+            const res = await fetch('/api/documents/version/' + currentVersion.id, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                alert('Version deleted successfully!');
+                loadData();
+            } else {
+                alert(data.error || 'Có lỗi xảy ra');
+            }
+        } catch(e) { console.error(e); }
+    }
+    let selectedProgressRowId = null;
+
+    function renderProgress() {
+        const tbody = document.getElementById('progress-tbody');
+        tbody.innerHTML = '';
+        selectedProgressRowId = null;
+        updateProgressButtons();
+
+        if (!currentVersion || !currentVersion.progress) return;
+
+        currentVersion.progress.forEach((p, idx) => {
+            const tr = document.createElement('tr');
+            let statusText = p.status === 'Waiting' ? 'Pending' : p.status;
+            let statusClass = '';
+            if (statusText === 'Approved') statusClass = 'text-green-600 font-bold';
+            if (statusText === 'Rejected') statusClass = 'text-red-600 font-bold';
+
+            let commentHtml = `<td class="px-2 py-1 border text-center border-r-0">${p.comment || ''}</td>`;
+            // If status is Pending and it's their team, allow entering a comment (but only if Document is Pending)
+            const isPendingDoc = currentVersion.status === 'Pending';
+            const isLatest = versionsData.length > 0 && versionsData[0].id === currentVersion.id;
+            if (isLatest && isPendingDoc && statusText === 'Pending' && (p.team_name === CURRENT_TEAM || IS_ADMIN)) {
+                commentHtml = `<td class="p-0 border border-r-0"><input type="text" id="prog-comment-${p.id}" class="excel-input" value="${p.comment || ''}" placeholder="Nhập comment..."></td>`;
+            }
+            
+            tr.innerHTML = `
+                <td class="px-2 py-1 border-l-0 text-center step-idx">${p.step_order}</td>
+                <td class="px-2 py-1 border text-center ${statusClass}">${statusText}</td>
+                <td class="px-2 py-1 border text-center text-xs">${p.action_at || ''}</td>
+                <td class="px-2 py-1 border text-center font-bold step-team-name">${p.team_name}</td>
+                <td class="px-2 py-1 border text-center">${p.action_by || ''}</td>
+                ${commentHtml}
+                <td class="px-2 py-1 border-r-0 text-center"><input type="checkbox" name="progress_select" value="${p.id}" data-team="${p.team_name}" data-status="${statusText}" class="w-4 h-4 cursor-pointer" onchange="onProgressSelect(this)"></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function onProgressSelect(checkbox) {
+        if (checkbox.checked) {
+            document.querySelectorAll('input[name="progress_select"]').forEach(cb => {
+                if (cb !== checkbox) cb.checked = false;
+            });
+            selectedProgressRowId = checkbox.value;
+        } else {
+            selectedProgressRowId = null;
+        }
+        updateProgressButtons();
+    }
+
+    function updateProgressButtons() {
+        const btnAdd = document.getElementById('btn-add-step');
+        const btnDel = document.getElementById('btn-del-step');
+        const btnUp = document.getElementById('btn-up-step');
+        const btnDown = document.getElementById('btn-down-step');
+        const btnConfirm = document.getElementById('btn-confirm-step');
+        
+        if (!btnAdd || !btnDel || !btnConfirm) return;
+
+        // Default state: disabled
+        btnAdd.disabled = true;
+        btnAdd.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+        btnDel.disabled = true;
+        btnDel.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+        if (btnUp) {
+            btnUp.disabled = true;
+            btnUp.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+        }
+        if (btnDown) {
+            btnDown.disabled = true;
+            btnDown.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+        }
+        btnConfirm.disabled = true;
+        btnConfirm.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+
+        const isDraft = currentVersion && currentVersion.status === 'Draft';
+        const isPendingDoc = currentVersion && currentVersion.status === 'Pending';
+        const isLatest = currentVersion && versionsData.length > 0 && versionsData[0].id === currentVersion.id;
+
+        if (isLatest && isDraft && isEditingMode && IS_UPLOADER) {
+            btnAdd.disabled = false;
+            btnAdd.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+        }
+
+        if (selectedProgressRowId) {
+            const radio = document.querySelector(`input[name="progress_select"]:checked`);
+            if (radio) {
+                const teamName = radio.getAttribute('data-team') || '';
+                const status = radio.getAttribute('data-status') || '';
+
+                // Del Step logic
+                if (isLatest && isDraft && isEditingMode && IS_UPLOADER && teamName !== 'OQA') {
+                    btnDel.disabled = false;
+                    btnDel.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                    if (btnUp) {
+                        btnUp.disabled = false;
+                        btnUp.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                    }
+                    if (btnDown) {
+                        btnDown.disabled = false;
+                        btnDown.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                    }
+                }
+
+                // Confirm Step logic
+                if (isLatest && isPendingDoc && status === 'Pending' && (teamName === CURRENT_TEAM || IS_ADMIN)) {
+                    btnConfirm.disabled = false;
+                    btnConfirm.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
+                }
+            }
+        }
+    }
+
+    function addProgressStep() {
+        const tbody = document.getElementById('progress-tbody');
+        const rows = tbody.querySelectorAll('tr');
+        
+        let newId = 'new-' + new Date().getTime();
+        let teamOptions = MODEL_TEAMS.map(t => `<option value="${t}">${t}</option>`).join('');
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="px-2 py-1 border-l-0 text-center step-idx"></td>
+            <td class="px-2 py-1 border text-center">Pending</td>
+            <td class="px-2 py-1 border text-center text-xs"></td>
+            <td class="p-0 border text-center">
+                <select class="excel-input text-center font-bold step-team-select" onchange="this.closest('tr').querySelector('input[type=checkbox]').setAttribute('data-team', this.value); updateProgressButtons();">${teamOptions}</select>
+            </td>
+            <td class="px-2 py-1 border text-center"></td>
+            <td class="px-2 py-1 border text-center"></td>
+            <td class="px-2 py-1 border-r-0 text-center"><input type="checkbox" name="progress_select" value="${newId}" data-team="" data-status="Pending" class="w-4 h-4 cursor-pointer" onchange="onProgressSelect(this)"></td>
+        `;
+        
+        // Find OQA row
+        let oqaRow = null;
+        rows.forEach(r => {
+            if (r.querySelector('td:nth-child(5)').textContent === 'OQA' || 
+                (r.querySelector('.step-team-name') && r.querySelector('.step-team-name').textContent === 'OQA')) {
+                oqaRow = r;
+            }
+        });
+
+        if (oqaRow) {
+            tbody.insertBefore(tr, oqaRow);
+        } else {
+            tbody.appendChild(tr);
+        }
+        
+        // Trigger initial team setup
+        const selectElement = tr.querySelector('.step-team-select');
+        tr.querySelector('input[type=checkbox]').setAttribute('data-team', selectElement.value);
+
+        updateStepIndices();
+    }
+
+    function updateStepIndices() {
+        const rows = document.querySelectorAll('#progress-tbody tr');
+        rows.forEach((row, idx) => {
+            row.querySelector('.step-idx').textContent = idx + 1;
+        });
+    }
+
+    function delProgressStep() {
+        if (!selectedProgressRowId) return;
+        const radio = document.querySelector(`input[name="progress_select"]:checked`);
+        if (radio) {
+            radio.closest('tr').remove();
+            selectedProgressRowId = null;
+            updateStepIndices();
+            updateProgressButtons();
+        }
+    }
+
+    function moveProgressStepUp() {
+        if (!selectedProgressRowId) return;
+        const radio = document.querySelector(`input[name="progress_select"]:checked`);
+        if (radio) {
+            const tr = radio.closest('tr');
+            if (tr.previousElementSibling) {
+                tr.parentNode.insertBefore(tr, tr.previousElementSibling);
+                updateStepIndices();
+            }
+        }
+    }
+
+    function moveProgressStepDown() {
+        if (!selectedProgressRowId) return;
+        const radio = document.querySelector(`input[name="progress_select"]:checked`);
+        if (radio) {
+            const tr = radio.closest('tr');
+            const next = tr.nextElementSibling;
+            if (next) {
+                const nextTeam = next.querySelector('.step-team-name') ? next.querySelector('.step-team-name').textContent : 
+                                 (next.querySelector('.step-team-select') ? next.querySelector('.step-team-select').value : '');
+                if (nextTeam !== 'OQA') {
+                    tr.parentNode.insertBefore(next, tr);
+                    updateStepIndices();
+                }
+            }
+        }
+    }
+
+    function getProgressStepsData() {
+        const rows = document.querySelectorAll('#progress-tbody tr');
+        const steps = [];
+        rows.forEach((tr, idx) => {
+            const teamSelect = tr.querySelector('.step-team-select');
+            if (teamSelect) {
+                steps.push({ team_name: teamSelect.value, status: 'Waiting', step_order: idx + 1 });
+            } else {
+                const team = tr.querySelector('.step-team-name').textContent;
+                steps.push({ team_name: team, status: 'Waiting', step_order: idx + 1 }); 
+            }
+        });
+        return steps;
+    }
+
+    function openConfirmModal() {
+        if (!selectedProgressRowId) return;
+        const radio = document.querySelector(`input[name="progress_select"]:checked`);
+        if (!radio) return;
+        const teamName = radio.getAttribute('data-team');
+        document.getElementById('confirm-team-name').textContent = teamName;
+        document.getElementById('confirm-modal').classList.remove('hidden');
+        document.getElementById('confirm-modal').classList.add('flex');
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirm-modal').classList.add('hidden');
+        document.getElementById('confirm-modal').classList.remove('flex');
+    }
+
+    async function submitConfirm(action) {
+        if (!selectedProgressRowId) return;
+        const progress_id = selectedProgressRowId;
+        const commentInput = document.getElementById('prog-comment-' + progress_id);
+        const comment = commentInput ? commentInput.value : '';
+        
+        closeConfirmModal();
+
+        try {
+            const res = await fetch('/api/documents/progress/' + progress_id + '/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: action, comment: comment })
+            });
+            const data = await res.json();
+            if (data.success) {
+                loadData();
+            } else {
+                alert(data.error);
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    function renderFileList() {
+        const fileList = document.getElementById('file-list');
+        if (!fileList) return;
+        fileList.innerHTML = '';
+        selectedFileId = null;
+
+        if (currentVersion && currentVersion.files) {
+            currentVersion.files.forEach(f => {
+                if (pendingDeletes.includes(f.id)) return;
+                const div = document.createElement('div');
+                div.className = 'shrink-0 p-1 border border-transparent hover:border-gray-300 w-full cursor-pointer hover:bg-gray-100 whitespace-nowrap overflow-hidden text-ellipsis rounded-sm text-black';
+                div.textContent = f.filename;
+                div.id = 'file-' + f.id;
+                div.onclick = () => selectFile(f.id);
+                div.ondblclick = () => downloadFile(f.id);
+                fileList.appendChild(div);
+            });
+        }
+        
+        pendingUploads.forEach((f, idx) => {
+            const div = document.createElement('div');
+            div.className = 'shrink-0 p-1 border border-transparent hover:border-gray-300 w-full cursor-pointer hover:bg-gray-100 whitespace-nowrap overflow-hidden text-ellipsis rounded-sm text-green-600 font-medium italic';
+            div.textContent = f.name + ' (mới)';
+            div.id = 'file-pending-' + idx;
+            div.onclick = () => selectFile('pending-' + idx);
+            fileList.appendChild(div);
+        });
+    }
+
+    function addAttachment() {
+        document.getElementById('attachment-input').click();
+    }
+    
+    async function uploadAttachments() {
+        if (!currentVersion) return;
+        const input = document.getElementById('attachment-input');
+        if (!input.files || input.files.length === 0) return;
+        
+        for (let i = 0; i < input.files.length; i++) {
+            pendingUploads.push(input.files[i]);
+        }
+        input.value = ''; // Reset
+        renderFileList();
+    }
+    
+    function selectFile(id) {
+        if (selectedFileId) {
+            const prev = document.getElementById('file-' + selectedFileId);
+            if (prev) {
+                prev.classList.remove('bg-blue-100', 'border-blue-500');
+                prev.classList.add('border-transparent');
+            }
+        }
+        selectedFileId = id;
+        const curr = document.getElementById('file-' + id);
+        if (curr) {
+            curr.classList.remove('border-transparent');
+            curr.classList.add('bg-blue-100', 'border-blue-500');
+        }
+    }
+    
+    function downloadFile(id) {
+        if (typeof id === 'string' && id.startsWith('pending-')) {
+            alert('File này chưa được lưu lên hệ thống, không thể tải về.');
+            return;
+        }
+        window.location.href = '/api/documents/version/files/' + id + '/download';
+    }
+    
+    async function delAttachment() {
+        if (!selectedFileId) {
+            alert('Vui lòng chọn 1 file để xóa.');
+            return;
+        }
+        if (typeof selectedFileId === 'string' && selectedFileId.startsWith('pending-')) {
+            const idx = parseInt(selectedFileId.replace('pending-', ''));
+            pendingUploads.splice(idx, 1);
+        } else {
+            if (!confirm('Bạn có chắc chắn muốn xóa file này khỏi phiên bản?')) return;
+            pendingDeletes.push(selectedFileId);
+        }
+        renderFileList();
+    }
+
+    async function releaseLockAsync() {
+        if (!CHECKLIST_ID) return;
+        try {
+            await fetch('/api/documents/' + CHECKLIST_ID + '/unlock', { method: 'POST' });
+        } catch(e) {}
+    }
+
+    window.addEventListener('beforeunload', function (e) {
+        if (isEditingMode && CHECKLIST_ID) {
+            navigator.sendBeacon('/api/documents/' + CHECKLIST_ID + '/unlock');
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => loadData());
+</script>
+
+<!-- Confirm Modal -->
+<div id="confirm-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded p-6 shadow-xl w-full max-w-md">
+        <h2 class="text-xl font-bold mb-4 border-b pb-2">Xác nhận phê duyệt</h2>
+        <p class="mb-6 text-gray-800" id="confirm-modal-text">
+            Xin chào <span class="font-bold">{{ current_user.fullname }}</span>, bạn có muốn thay mặt cho Team <span class="font-bold" id="confirm-team-name">...</span> xác nhận hạng mục này không?
+        </p>
+        <div class="flex justify-end gap-3">
+            <button class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400" onclick="closeConfirmModal()">Cancel</button>
+            <button class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700" onclick="submitConfirm('Rejected')">Reject</button>
+            <button class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" onclick="submitConfirm('Approved')">Approve</button>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,8 @@
+python_env/
+QA_Confirm_Gate_Portable.zip
+tools/
+.agent/
+*.pyc
+__pycache__/
+.vscode/
+.idea/

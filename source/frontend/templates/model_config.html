@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA Confirm Gate - Model Config</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/script.js"></script>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+    <div class="flex flex-1 overflow-hidden">
+        <aside class="w-64 border-r border-gray-400 flex flex-col shrink-0 sidebar">
+            <div class="h-16 flex items-center px-4 border-b border-gray-400">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="text-lg font-bold tracking-wide">QA Confirm Gate</span>
+            </div>
+            <div class="flex-1 py-4 space-y-1">
+                <a href="/" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span>Home</span>
+                </a>
+                <a href="/upload" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <span>Upload Documents</span>
+                </a>
+                <a href="/setting" class="flex items-center space-x-3 px-4 py-3 bg-[#0a192f] text-white mx-2 rounded-md font-bold shadow">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>Model Config</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    <span>Feedback</span>
+                </a>
+                {% if current_user and current_user.access_role == 'Admin' %}
+                <a href="/admin" class="flex items-center space-x-3 px-4 py-3 mx-2 text-red-600 font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <span>Admin Management</span>
+                </a>
+                {% endif %}
+            </div>
+            <div class="mt-auto border-t border-gray-400 p-4 flex items-center space-x-3 bg-white">
+                <div class="w-10 h-10 rounded-full border border-black flex items-center justify-center font-bold text-sm bg-gray-100">
+                    AD
+                </div>
+                <div class="text-sm">
+                    <p class="font-bold">{{ current_user.fullname if current_user else 'Guest' }}</p>
+                    <p class="text-gray-600 text-xs">{{ current_user.email if current_user else 'guest@domain.com' }}</p>
+                </div>
+            </div>
+            <form action="/logout" method="POST" class="m-0 border-t border-gray-400 bg-[#cbd5e1] p-3">
+                <button type="submit" class="w-full flex items-center space-x-3 font-bold text-black hover:text-gray-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </aside>
+        <main class="flex-1 overflow-y-auto p-4 flex flex-col gap-6 scrollbar-custom">
+            {% set has_permission = can_edit_backend %}
+            {% set is_my_lock = (locked_by == current_user.fullname) %}
+            {% set can_edit = is_my_lock %}
+            
+            {% if has_permission %}
+            <div class="flex items-center justify-end gap-4 shrink-0">
+                <div id="editing-time-container" class="{% if not is_my_lock %}hidden{% endif %} text-red-600 font-bold text-sm flex items-center gap-1">
+                    <span>Editing Time :</span> <span id="config-timer-display">10:00</span>
+                </div>
+                <button id="btn-start-edit" class="btn-primary {% if is_my_lock %}opacity-50 cursor-not-allowed{% endif %}" {% if is_my_lock %}disabled{% endif %}>Start Edit</button>
+                <button id="btn-end-edit" class="btn-primary {% if not is_my_lock %}opacity-50 cursor-not-allowed{% endif %}" {% if not is_my_lock %}disabled{% endif %}>End Edit</button>
+            </div>
+            
+            <script>
+                document.getElementById('btn-start-edit')?.addEventListener('click', async () => {
+                    const res = await fetch('/api/config/lock', { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.error);
+                    }
+                });
+                
+                document.getElementById('btn-end-edit')?.addEventListener('click', async () => {
+                    await fetch('/api/config/unlock', { method: 'POST' });
+                    window.location.reload();
+                });
+                
+                {% if is_my_lock %}
+                (function() {
+                    window.timeLeft = 600 - ({{ server_time }} - {{ locked_at }});
+                    if (window.timeLeft < 0) window.timeLeft = 0;
+                    
+                    window.resetConfigTimer = function() { 
+                        window.timeLeft = 600; 
+                        document.getElementById('config-timer-display').innerText = '10:00'; 
+                    };
+                    
+                    const timerInterval = setInterval(() => {
+                        window.timeLeft--;
+                        if (window.timeLeft <= 0) {
+                            clearInterval(timerInterval);
+                            document.getElementById('config-timer-display').innerText = "Time Out!";
+                        } else {
+                            const mm = String(Math.floor(window.timeLeft / 60)).padStart(2, '0');
+                            const ss = String(window.timeLeft % 60).padStart(2, '0');
+                            document.getElementById('config-timer-display').innerText = mm + ":" + ss;
+                        }
+                    }, 1000);
+                    
+                    window.addEventListener('beforeunload', function (e) {
+                        navigator.sendBeacon('/api/config/unlock');
+                    });
+                })();
+                {% endif %}
+            </script>
+            {% endif %}
+            
+            <div class="border-box h-[40%] relative">
+
+                <div class="p-3 flex items-center justify-between border-b border-gray-400 shrink-0">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                        <h3 class="section-title">Model List</h3>
+                    </div>
+                </div>
+                <div class="overflow-auto flex-1 relative bg-white">
+                    <table class="text-center resizable" id="model-table">
+                        <thead>
+                            <tr>
+                                <th class="sticky-header p-2 min-w-[150px] border-t-0 border-l-0">Model Name</th>
+                                <th class="sticky-header p-2 min-w-[120px] border-t-0">Model Type</th>
+                                <th class="sticky-header p-2 min-w-[100px] border-t-0">Customer</th>
+                                <th class="sticky-header p-2 min-w-[100px] border-t-0">Line</th>
+                                <th class="sticky-header p-2 min-w-[120px] border-t-0">MP1st Date</th>
+                                <th class="sticky-header p-2 min-w-[80px] border-t-0">MP1st Qty</th>
+                                <th class="sticky-header p-2 min-w-[120px] border-t-0">Ship1st Date</th>
+                                <th class="sticky-header p-2 min-w-[80px] border-t-0">Ship1st Qty</th>
+                                <th class="sticky-header p-2 min-w-[80px] border-t-0">Status</th>
+                                <th class="sticky-header p-2 min-w-[80px] border-t-0">Activate</th>
+                                <th class="sticky-header p-2 min-w-[60px] border-t-0 border-r-0">Select</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for model in models %}
+                            <tr data-id="{{ model.id }}" class="cursor-pointer hover:bg-gray-100 model-row">
+                                <td class="p-0 border-l-0"><input type="text" class="excel-input text-center model-input" data-field="name" value="{{ model.name or '' }}" {% if not can_edit %}readonly{% endif %}></td>
+                                <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="model_type" value="{{ model.model_type or '' }}" {% if not can_edit %}readonly{% endif %}></td>
+                                <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="customer" value="{{ model.customer or '' }}" {% if not can_edit %}readonly{% endif %}></td>
+                                <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="line" value="{{ model.line or '' }}" {% if not can_edit %}readonly{% endif %}></td>
+                                <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="mp1st_date" value="{{ model.mp1st_date or '' }}" {% if not can_edit %}readonly{% endif %}></td>
+                                <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="mp1st_qty" value="{{ model.mp1st_qty or '' }}" {% if not can_edit %}readonly{% endif %}></td>
+                                <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="ship1st_date" value="{{ model.ship1st_date or '' }}" {% if not can_edit %}readonly{% endif %}></td>
+                                <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="ship1st_qty" value="{{ model.ship1st_qty or '' }}" {% if not can_edit %}readonly{% endif %}></td>
+                                <td class="p-0"><input type="text" class="excel-input text-center text-blue-700 font-bold" value="{{ model.status_percent }}" readonly></td>
+                                <td class="p-0">
+                                    <select class="excel-input text-center model-input" data-field="activate" {% if not can_edit %}disabled{% endif %}>
+                                        <option value="Yes" {% if model.activate == 'Yes' %}selected{% endif %}>Yes</option>
+                                        <option value="No" {% if model.activate != 'Yes' %}selected{% endif %}>No</option>
+                                    </select>
+                                </td>
+                                <td class="p-0 border-r-0"><input type="checkbox" class="w-4 h-4 cursor-pointer model-select-checkbox"></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-3 border-t border-gray-400 shrink-0 flex gap-2">
+                      <button id="btn-save-model-list" class="btn-primary">Save</button>
+                      <button id="btn-create-model" class="btn-primary">+ New Model</button>
+                      <button id="btn-delete-model" class="btn-primary">- Delete Model</button>
+                      <button id="btn-up-model" class="btn-primary px-2">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                      </button>
+                      <button id="btn-down-model" class="btn-primary px-2">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                      </button>
+                      <button id="btn-query-model" class="btn-primary ml-auto">Query</button>
+                </div>
+            </div>
+            <div class="flex-1 flex gap-6 min-h-0 relative h-[50%]">
+                <div class="flex-1 border-box relative">
+                    <div class="p-3 flex items-center border-b border-gray-400 shrink-0">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        <h3 class="section-title">Master Checklist</h3>
+                    </div>
+                    <div class="overflow-auto flex-1 relative bg-white border-b border-gray-400">
+                        <table class="text-center resizable" id="master-table">
+                            <thead>
+                                <tr>
+                                    <th class="sticky-header p-2 min-w-[120px] border-t-0 border-l-0">Team</th>
+                                    <th class="sticky-header p-2 min-w-[150px] border-t-0">Level 1</th>
+                                    <th class="sticky-header p-2 min-w-[150px] border-t-0">Level 2</th>
+                                    <th class="sticky-header p-2 min-w-[60px] border-t-0 border-r-0">Select</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in master_checklist %}
+                                <tr data-id="{{ item.id }}" class="hover:bg-gray-100 master-row">
+                                    <td class="p-0 border-l-0">
+                                        <select class="excel-input text-center master-input" data-field="team" {% if not can_edit %}disabled{% endif %}>
+                                            <option value="Others" {% if not item.team or item.team == 'Others' %}selected{% endif %}>Others</option>
+                                            {% for t in teams %}
+                                            <option value="{{ t.name }}" {% if item.team == t.name %}selected{% endif %}>{{ t.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td class="p-0"><input type="text" class="excel-input text-center master-input" data-field="level_1" value="{{ item.level_1 or '' }}" {% if not can_edit %}readonly{% endif %}></td>
+                                    <td class="p-0"><input type="text" class="excel-input text-center master-input" data-field="level_2" value="{{ item.level_2 or '' }}" {% if not can_edit %}readonly{% endif %}></td>
+                                    <td class="p-0 border-r-0"><input type="checkbox" class="w-4 h-4 cursor-pointer master-checkbox" {% if not can_edit %}disabled{% endif %}></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-3 border-t border-gray-400 shrink-0 flex gap-2">
+                        <button id="btn-save-master-list" class="btn-primary">Save</button>
+                        <button id="btn-new-item" class="btn-primary">+ New Item</button>
+                        <button id="btn-remove-item" class="btn-primary">- Remove Item</button>
+                        <button type="button" id="btn-select-all-master" class="btn-primary ml-auto" data-selected="false">@</button>
+                        <button id="btn-add-to-model" class="btn-primary">Add to Model</button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-center shrink-0 w-8">
+                    <svg class="w-12 h-12 text-gray-400 opacity-70" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="flex-1 border-box relative">
+                    <div class="p-3 flex items-center border-b border-gray-400 shrink-0">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        <h3 class="section-title">Model Checklist : <span id="current-model-name" class="text-blue-800 ml-2">-- No Selection --</span></h3>
+                    </div>
+                    <div class="overflow-auto flex-1 relative bg-white border-b border-gray-400">
+                        <table class="text-center resizable" id="model-checklist-table">
+                            <thead>
+                                <tr>
+                                    <th class="sticky-header p-2 min-w-[120px] border-t-0 border-l-0">Team</th>
+                                    <th class="sticky-header p-2 min-w-[150px] border-t-0">Level 1</th>
+                                    <th class="sticky-header p-2 min-w-[150px] border-t-0">Level 2</th>
+                                    <th class="sticky-header p-2 min-w-[60px] border-t-0 border-r-0">Select</th>
+                                </tr>
+                            </thead>
+                            <tbody id="model-checklist-body">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-3 border-t border-gray-400 shrink-0 flex gap-2">
+                        <button id="btn-save-model-checklist" class="btn-primary">Save</button>
+                        <button type="button" id="btn-select-all-model" class="btn-primary ml-auto" data-selected="false">@</button>
+                        <button id="btn-remove-from-model" class="btn-primary">Remove from model</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        const canEdit = {{ 'true' if can_edit else 'false' }};
+        const isMyLock = {{ 'true' if is_my_lock else 'false' }};
+        if (!isMyLock) {
+            // Wait for DOM to be ready just in case, though script is at bottom
+            document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('#btn-save-model-list, #btn-create-model, #btn-delete-model, #btn-up-model, #btn-down-model, #btn-save-master-list, #btn-new-item, #btn-remove-item, #btn-select-all-master, #btn-add-to-model, #btn-save-model-checklist, #btn-select-all-model, #btn-remove-from-model').forEach(btn => {
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                });
+                
+                // Also disable inputs just to be safe
+                document.querySelectorAll('.model-input, .master-input, .model-checklist-input, .master-checkbox, .model-checkbox').forEach(el => {
+                    el.disabled = true;
+                    el.classList.add('opacity-50', 'cursor-not-allowed');
+                });
+            });
+        }
+        let currentModelId = null;
+
+        
+        
+        function handleConfigError(data) {
+            if (data && !data.success && data.error) {
+                alert(data.error);
+                if (data.error.includes("chỉnh sửa model config")) {
+                    location.reload();
+                }
+                return true;
+            }
+            return false;
+        }
+
+        function syncMasterCheckboxes() {
+            const modelRows = document.querySelectorAll('#model-checklist-body tr:not(.deleted-row)');
+            const usedKeys = new Set();
+            modelRows.forEach(tr => {
+                const team = tr.querySelector('[data-field="team"]').value || '';
+                const level1 = tr.querySelector('[data-field="level_1"]').value || '';
+                const level2 = tr.querySelector('[data-field="level_2"]').value || '';
+                usedKeys.add(team + '|' + level1 + '|' + level2);
+            });
+            const masterRows = document.querySelectorAll('#master-table tbody tr:not(.deleted-row)');
+            masterRows.forEach(tr => {
+                const teamElem = tr.querySelector('[data-field="team"]');
+                const team = teamElem ? teamElem.value : '';
+                const level1 = tr.querySelector('[data-field="level_1"]').value || '';
+                const level2 = tr.querySelector('[data-field="level_2"]').value || '';
+                const key = team + '|' + level1 + '|' + level2;
+                const chk = tr.querySelector('.master-checkbox');
+                if (usedKeys.has(key)) {
+                    chk.checked = true;
+                    chk.disabled = true;
+                    tr.classList.add('bg-gray-200');
+                } else {
+                    if (canEdit) chk.disabled = false;
+                    tr.classList.remove('bg-gray-200');
+                }
+            });
+        }
+        // --- 1. Model List Interaction ---
+        const modelTable = document.getElementById('model-table');
+        const modelTbody = modelTable.querySelector('tbody');
+        let selectedModelRow = null;
+        // --- Select All Logic ---
+        document.getElementById('btn-select-all-master')?.addEventListener('click', function() {
+            const isSelected = this.getAttribute('data-selected') === 'true';
+            const checkboxes = document.querySelectorAll('.master-checkbox:not([disabled])');
+            checkboxes.forEach(chk => {
+                const tr = chk.closest('tr');
+                if (!tr.classList.contains('hidden')) {
+                    chk.checked = !isSelected;
+                }
+            });
+            this.setAttribute('data-selected', !isSelected);
+        });
+        document.getElementById('btn-select-all-model')?.addEventListener('click', function() {
+            const isSelected = this.getAttribute('data-selected') === 'true';
+            const checkboxes = document.querySelectorAll('.model-checkbox:not([disabled])');
+            checkboxes.forEach(chk => {
+                const tr = chk.closest('tr');
+                if (!tr.classList.contains('hidden')) {
+                    chk.checked = !isSelected;
+                }
+            });
+            this.setAttribute('data-selected', !isSelected);
+        });
+        // Query Button
+        document.getElementById('btn-query-model')?.addEventListener('click', async () => {
+            const checkedBoxes = modelTbody.querySelectorAll('.model-select-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                alert('Vui lòng tích chọn 1 Model trong bảng Model List trước.');
+                return;
+            }
+            if (checkedBoxes.length > 1) {
+                alert('Chỉ có thể truy xuất 1 Model');
+                return;
+            }
+            const checkedBox = checkedBoxes[0];
+            const tr = checkedBox.closest('tr');
+            const modelId = tr.getAttribute('data-id');
+            const modelName = tr.querySelector('input[data-field="name"]').value;
+            if (!modelId) {
+                alert('Vui lòng tạo Model và lưu trước khi Query.');
+                return;
+            }
+            currentModelId = modelId;
+            document.getElementById('current-model-name').textContent = modelName || 'Untitled';
+            // Fetch checklist for this model
+            const res = await fetch(`/api/model_checklist/${modelId}`);
+            const items = await res.json();
+            const tbody = document.getElementById('model-checklist-body');
+            tbody.innerHTML = '';
+            items.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-id', item.id);
+                tr.className = 'hover:bg-gray-100';
+                tr.innerHTML = `
+                    <td class="p-0 border-l-0"><input type="text" class="excel-input text-center" data-field="team" value="${item.team || ''}" readonly></td>
+                    <td class="p-0"><input type="text" class="excel-input text-center" data-field="level_1" value="${item.level_1 || ''}" readonly></td>
+                    <td class="p-0"><input type="text" class="excel-input text-center" data-field="level_2" value="${item.level_2 || ''}" readonly></td>
+                    <td class="p-0 border-r-0"><input type="checkbox" class="w-4 h-4 cursor-pointer model-checkbox" ${!canEdit ? 'disabled' : ''}></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            syncMasterCheckboxes();
+        });
+        if (canEdit) {
+            // Create Model Button
+            document.getElementById('btn-create-model').addEventListener('click', () => {
+                const tr = document.createElement('tr');
+                tr.className = 'cursor-pointer hover:bg-gray-100 model-row';
+                tr.innerHTML = `
+                    <td class="p-0 border-l-0"><input type="text" class="excel-input text-center model-input" data-field="name" value=""></td>
+                    <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="model_type" value=""></td>
+                    <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="customer" value=""></td>
+                    <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="line" value=""></td>
+                    <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="mp1st_date" value=""></td>
+                    <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="mp1st_qty" value=""></td>
+                    <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="ship1st_date" value=""></td>
+                    <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="ship1st_qty" value=""></td>
+                    <td class="p-0"><input type="text" class="excel-input text-center text-blue-700 font-bold" value="0.0%" readonly></td>
+                    <td class="p-0">
+                        <select class="excel-input text-center model-input" data-field="activate">
+                            <option value="Yes">Yes</option>
+                            <option value="No" selected>No</option>
+                        </select>
+                    </td>
+                    <td class="p-0 border-r-0"><input type="checkbox" class="w-4 h-4 cursor-pointer model-select-checkbox"></td>
+                `;
+                modelTbody.appendChild(tr);
+            });
+            async function saveModelRow(tr, sort_order) {
+                const id = tr.getAttribute('data-id');
+                const data = { id: id ? parseInt(id) : null, sort_order: sort_order };
+                tr.querySelectorAll('.model-input').forEach(inp => {
+                    data[inp.getAttribute('data-field')] = inp.value;
+                });
+                // Require Name to save
+                if (!data.name) return;
+                
+                try {
+                    const res = await fetch('/api/models', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(data)
+                    });
+                    const result = await res.json();
+                    if (result.success && !id) {
+                        tr.setAttribute('data-id', result.id);
+                    } else if (handleConfigError(result)) {
+                        return;
+                    }
+                            
+                    
+                    
+                } catch (e) {
+                    console.error("Save failed", e);
+                }
+            }
+            // Save Model List Button
+            document.getElementById('btn-save-model-list')?.addEventListener('click', async () => {
+                const activeRows = modelTbody.querySelectorAll('tr:not(.deleted-row)');
+                const names = [];
+                for (let tr of activeRows) {
+                    const nameInp = tr.querySelector('.model-input[data-field="name"]');
+                    if (nameInp && nameInp.value.trim()) {
+                        const nameVal = nameInp.value.trim().toLowerCase();
+                        if (names.includes(nameVal)) {
+                            alert("Model đã tồn tại. Hãy kiểm tra lại Model Name");
+                            return; // Dừng lưu
+                        }
+                        names.push(nameVal);
+                    }
+                }
+                const rows = modelTbody.querySelectorAll('tr');
+                let orderIndex = 0;
+                for (let tr of rows) {
+                    if (tr.classList.contains('deleted-row')) {
+                        const id = tr.getAttribute('data-id');
+                        if (id) { const dRes = await fetch(`/api/models/${id}`, { method: 'DELETE' }); const dData = await dRes.json(); if(handleConfigError(dData)) return;  }
+                        tr.remove();
+                    } else {
+                        await saveModelRow(tr, orderIndex++);
+                    }
+                }
+                alert('Đã lưu bảng Model List thành công!');
+            });
+            // Up/Down Buttons
+            document.getElementById('btn-up-model')?.addEventListener('click', () => {
+                const checkedBoxes = modelTbody.querySelectorAll('.model-select-checkbox:checked');
+                if (checkedBoxes.length === 0) return alert('Vui lòng chọn 1 Model');
+                checkedBoxes.forEach(checkedBox => {
+                    const tr = checkedBox.closest('tr');
+                    if (tr.previousElementSibling) {
+                        modelTbody.insertBefore(tr, tr.previousElementSibling);
+                    }
+                });
+            });
+            document.getElementById('btn-down-model')?.addEventListener('click', () => {
+                const checkedBoxes = Array.from(modelTbody.querySelectorAll('.model-select-checkbox:checked')).reverse();
+                if (checkedBoxes.length === 0) return alert('Vui lòng chọn 1 Model');
+                checkedBoxes.forEach(checkedBox => {
+                    const tr = checkedBox.closest('tr');
+                    if (tr.nextElementSibling) {
+                        modelTbody.insertBefore(tr.nextElementSibling, tr);
+                    }
+                });
+            });
+            // Delete Model Button
+            document.getElementById('btn-delete-model')?.addEventListener('click', () => {
+                const checkedBoxes = modelTbody.querySelectorAll('.model-select-checkbox:checked');
+                if (checkedBoxes.length === 0) {
+                    alert('Vui lòng tích chọn ít nhất 1 Model trong bảng Model List trước để xóa.');
+                    return;
+                }
+                checkedBoxes.forEach(checkedBox => {
+                    const tr = checkedBox.closest('tr');
+                    tr.classList.add('hidden', 'deleted-row');
+                    checkedBox.checked = false;
+                });
+            });
+            // --- 2. Master Checklist Interaction ---
+            const masterTbody = document.querySelector('#master-table tbody');
+            document.getElementById('btn-new-item').addEventListener('click', () => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-100 master-row';
+                tr.innerHTML = `
+                    <td class="p-0 border-l-0">
+                        <select class="excel-input text-center master-input" data-field="team">
+                            <option value="Others" selected>Others</option>
+                            {% for t in teams %}
+                            <option value="{{ t.name }}">{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td class="p-0"><input type="text" class="excel-input text-center master-input" data-field="level_1" value=""></td>
+                    <td class="p-0"><input type="text" class="excel-input text-center master-input" data-field="level_2" value=""></td>
+                    <td class="p-0 border-r-0"><input type="checkbox" class="w-4 h-4 cursor-pointer master-checkbox"></td>
+                `;
+                masterTbody.appendChild(tr);
+            });
+            // Save Master Checklist Button
+            document.getElementById('btn-save-master-list')?.addEventListener('click', async () => {
+                const rows = masterTbody.querySelectorAll('tr');
+                for (let tr of rows) {
+                    if (tr.classList.contains('deleted-row')) {
+                        const id = tr.getAttribute('data-id');
+                        if (id) { const dRes = await fetch(`/api/master_checklist/${id}`, { method: 'DELETE' }); const dData = await dRes.json(); if(handleConfigError(dData)) return;  }
+                        tr.remove();
+                    } else {
+                        const id = tr.getAttribute('data-id');
+                        const data = { id: id ? parseInt(id) : null };
+                        tr.querySelectorAll('.master-input').forEach(inp => {
+                            data[inp.getAttribute('data-field')] = inp.value;
+                        });
+                        if (!data.team && !data.level_1 && !data.level_2) continue;
+                        
+                        try {
+                            const res = await fetch('/api/master_checklist', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify(data)
+                            });
+                            const result = await res.json();
+                            if (result.success && !id) {
+                                tr.setAttribute('data-id', result.id);
+                            } else if (handleConfigError(result)) {
+                                return;
+                            }
+                            
+                    
+                            
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    }
+                }
+                alert('Đã lưu bảng Document Checklist (ALL) thành công!');
+                window.location.reload();
+            });
+            document.getElementById('btn-remove-item').addEventListener('click', () => {
+                const checkboxes = masterTbody.querySelectorAll('.master-checkbox:checked:not([disabled])');
+                checkboxes.forEach(chk => {
+                    const tr = chk.closest('tr');
+                    tr.classList.add('hidden', 'deleted-row');
+                    chk.checked = false;
+                });
+            });
+            // Add to model
+            document.getElementById('btn-add-to-model').addEventListener('click', () => {
+                if (!currentModelId) {
+                    alert('Vui lòng chọn Model và bấm Query trước khi add.');
+                    return;
+                }
+                const checkboxes = masterTbody.querySelectorAll('.master-checkbox:checked:not(.hidden):not([disabled])');
+                const tbody = document.getElementById('model-checklist-body');
+                checkboxes.forEach(chk => {
+                    const trMaster = chk.closest('tr');
+                    if (trMaster.classList.contains('deleted-row')) return;
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-100';
+                    tr.innerHTML = `
+                        <td class="p-0 border-l-0"><input type="text" class="excel-input text-center" data-field="team" value="${trMaster.querySelector('[data-field="team"]').value}" readonly></td>
+                        <td class="p-0"><input type="text" class="excel-input text-center" data-field="level_1" value="${trMaster.querySelector('[data-field="level_1"]').value}" readonly></td>
+                        <td class="p-0"><input type="text" class="excel-input text-center" data-field="level_2" value="${trMaster.querySelector('[data-field="level_2"]').value}" readonly></td>
+                        <td class="p-0 border-r-0"><input type="checkbox" class="w-4 h-4 cursor-pointer model-checkbox"></td>
+                    `;
+                    tbody.appendChild(tr);
+                    chk.checked = false;
+                });
+                syncMasterCheckboxes();
+            });
+            // Remove from model
+            document.getElementById('btn-remove-from-model').addEventListener('click', () => {
+                if (!currentModelId) return;
+                const tbody = document.getElementById('model-checklist-body');
+                const checkboxes = tbody.querySelectorAll('.model-checkbox:checked:not([disabled])');
+                checkboxes.forEach(chk => {
+                    const tr = chk.closest('tr');
+                    tr.classList.add('hidden', 'deleted-row');
+                    chk.checked = false;
+                });
+                syncMasterCheckboxes();
+            });
+            // Save Model Checklist
+            document.getElementById('btn-save-model-checklist')?.addEventListener('click', async () => {
+                if (!currentModelId) return;
+                const tbody = document.getElementById('model-checklist-body');
+                const rows = tbody.querySelectorAll('tr');
+                const itemsToAdd = [];
+                const itemIdsToRemove = [];
+                rows.forEach(tr => {
+                    const id = tr.getAttribute('data-id');
+                    if (tr.classList.contains('deleted-row')) {
+                        if (id) itemIdsToRemove.push(parseInt(id));
+                        tr.remove();
+                    } else if (!id) {
+                        itemsToAdd.push({
+                            team: tr.querySelector('[data-field="team"]').value,
+                            level_1: tr.querySelector('[data-field="level_1"]').value,
+                            level_2: tr.querySelector('[data-field="level_2"]').value
+                        });
+                    }
+                });
+                if (itemIdsToRemove.length > 0) {
+                    const rmRes = await fetch(`/api/model_checklist/${currentModelId}/remove`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({item_ids: itemIdsToRemove })
+                    });
+                    const rmData = await rmRes.json();
+                    if(handleConfigError(rmData)) return;
+                    
+                }
+                if (itemsToAdd.length > 0) {
+                    const addRes = await fetch(`/api/model_checklist/${currentModelId}`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({items: itemsToAdd })
+                    });
+                    const addData = await addRes.json();
+                    if(handleConfigError(addData)) return;
+                    
+                }
+                // Reload to get real IDs
+                document.getElementById('btn-query-model').click();
+                alert('Đã lưu bảng Model Checklist thành công!');
+            });
+        }
+    </script>
+</body>
+</html>
