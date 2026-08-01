@@ -8,7 +8,7 @@ from backend.routers.dashboard import router as dashboard_router
 from backend.routers.admin_management import router as admin_management_router
 from backend.routers.model_config import router as model_config_router
 from backend.routers.upload_document import router as upload_document_router
-from backend.core.config import DB_PATH
+from backend.core.config import DB_PATH, MP_READINESS_DATA_PATH, V00_TEMPLATES_PATH
 
 app = FastAPI(title="QA Confirm Gate")
 
@@ -20,6 +20,12 @@ app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 # Chèn dữ liệu mặc định lúc khởi động (Tài khoản Admin và Teams)
 @app.on_event("startup")
 async def startup_event():
+    db_dir = os.path.dirname(DB_PATH)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
+    os.makedirs(MP_READINESS_DATA_PATH, exist_ok=True)
+    os.makedirs(V00_TEMPLATES_PATH, exist_ok=True)
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
