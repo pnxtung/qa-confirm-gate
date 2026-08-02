@@ -10,8 +10,24 @@
     <script src="/static/script.js"></script>
 </head>
 <body class="h-screen overflow-hidden flex flex-col">
-    <div class="flex flex-1 overflow-hidden">
-        <aside class="w-64 border-r border-gray-400 flex flex-col shrink-0 sidebar">
+    <!-- Mobile Header -->
+    <header class="md:hidden bg-[#0a192f] text-white h-14 flex items-center justify-between px-4 shrink-0 shadow-md z-30">
+        <div class="flex items-center space-x-3">
+            <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="p-1.5 rounded-md hover:bg-slate-800 focus:outline-none border border-slate-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <span class="font-bold tracking-wide text-base">QA Confirm Gate</span>
+        </div>
+        <div class="text-xs font-semibold bg-slate-800 px-2.5 py-1 rounded-full text-slate-200 border border-slate-700">
+            {{ current_user.fullname if current_user else 'Guest' }}
+        </div>
+    </header>
+
+    <!-- Mobile Drawer Overlay -->
+    <div id="mobile-menu-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden transition-opacity"></div>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        <aside id="main-sidebar" class="fixed inset-y-0 left-0 z-50 w-64 border-r border-gray-400 flex flex-col shrink-0 sidebar -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
             <div class="h-16 flex items-center px-4 border-b border-gray-400">
                 <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span class="text-lg font-bold tracking-wide">QA Confirm Gate</span>
@@ -645,6 +661,15 @@
                 document.getElementById('btn-query-model').click();
                 alert('Đã lưu bảng Model Checklist thành công!');
             });
+        }
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('main-sidebar');
+            const overlay = document.getElementById('mobile-menu-overlay');
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            }
         }
     </script>
 </body>
