@@ -6,3 +6,4 @@ tools/
 __pycache__/
 .vscode/
 .idea/
+*.json

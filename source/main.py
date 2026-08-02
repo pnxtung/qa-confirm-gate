@@ -9,6 +9,7 @@ from backend.routers.admin_management import router as admin_management_router
 from backend.routers.model_config import router as model_config_router
 from backend.routers.upload_document import router as upload_document_router
 from backend.core.config import DB_PATH, MP_READINESS_DATA_PATH, V00_TEMPLATES_PATH
+from backend.core.gdrive_storage import restore_database_from_gdrive, sync_database_to_gdrive
 
 app = FastAPI(title="QA Confirm Gate")
 
@@ -25,6 +26,9 @@ async def startup_event():
         os.makedirs(db_dir, exist_ok=True)
     os.makedirs(MP_READINESS_DATA_PATH, exist_ok=True)
     os.makedirs(V00_TEMPLATES_PATH, exist_ok=True)
+
+    # Tải bản database.db mới nhất từ Google Drive nếu có
+    restore_database_from_gdrive()
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
