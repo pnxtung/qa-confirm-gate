@@ -74,27 +74,27 @@
         </aside>
         <main class="flex-1 overflow-y-auto p-3 md:p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 bg-white scrollbar-custom min-h-0">
             <!-- 1. Clock (Mobile Order 1 / Desktop Top Right col 8-12, row 1) -->
-            <div class="border-box order-1 lg:order-none lg:col-start-8 lg:col-span-5 lg:row-start-1">
-                <div class="bg-white border-b border-gray-400 p-2">
+            <div class="border-box order-1 lg:order-none lg:col-start-8 lg:col-span-5 lg:row-start-1 bg-white min-h-[90px]">
+                <div class="bg-white border-b border-gray-400 p-2 shrink-0">
                     <h3 class="section-title flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Xin chào {{ current_user.fullname if current_user else 'Guest' }}, <span id="dynamic-greeting"></span>
                     </h3>
                 </div>
-                <div class="bg-white flex-1 flex items-center justify-center p-3 min-h-[50px]">
+                <div class="p-3 flex items-center justify-center min-h-[50px] bg-white flex-1">
                     <span id="realtime-clock" class="text-base md:text-xl font-medium tracking-wide text-gray-800 text-center">--:--</span>
                 </div>
             </div>
 
             <!-- 2. Model Filter (Mobile Order 2 / Desktop Top Left col 1-7, row 1) -->
-            <div class="border-box order-2 lg:order-none lg:col-start-1 lg:col-span-7 lg:row-start-1">
-                <div class="bg-white border-b border-gray-400 p-2">
+            <div class="border-box order-2 lg:order-none lg:col-start-1 lg:col-span-7 lg:row-start-1 bg-white min-h-[90px]">
+                <div class="bg-white border-b border-gray-400 p-2 shrink-0">
                     <h3 class="section-title flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
                         Model Filter
                     </h3>
                 </div>
-                <div class="bg-white p-3">
+                <div class="p-3 bg-white flex-1 flex flex-col justify-center">
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 text-xs">
                         <div class="flex items-center gap-1 min-w-[100px] font-bold">
                             <div class="w-1.5 h-1.5 bg-black rounded-sm"></div> Search Name
