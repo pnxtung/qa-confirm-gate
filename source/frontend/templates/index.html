@@ -73,23 +73,10 @@
             </form>
         </aside>
         <main class="flex-1 overflow-y-auto p-3 lg:p-4 flex flex-col gap-4 bg-white scrollbar-custom min-h-0">
-            <!-- Top Section: Model Filter (Left) & Greeting/Clock (Right) on PC -->
-            <div class="flex flex-col lg:flex-row gap-4 shrink-0 max-lg:contents">
-                <!-- 1. Greeting & Realtime Clock Box (Mobile Order 1 / Desktop Right Col) -->
-                <div class="border-box flex-1 max-lg:order-1 bg-white">
-                    <div class="bg-white border-b border-gray-400 p-2 shrink-0">
-                        <h3 class="section-title flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            Xin chào {{ current_user.fullname if current_user else 'Guest' }}, <span id="dynamic-greeting"></span>
-                        </h3>
-                    </div>
-                    <div class="bg-white flex-1 flex items-center justify-center p-3">
-                        <span id="realtime-clock" class="text-base md:text-xl font-medium tracking-wide text-gray-800 text-center">--:--</span>
-                    </div>
-                </div>
-
-                <!-- 2. Model Filter Box (Mobile Order 2 / Desktop Left Col) -->
-                <div class="border-box flex-[1.5] max-lg:order-2 bg-white">
+            <!-- Top Section: Model Filter (Left 60%) & Greeting/Clock (Right 40%) on PC -->
+            <div class="flex flex-col-reverse lg:flex-row gap-4 shrink-0">
+                <!-- Model Filter Box (Desktop Left 60% / Mobile Position 2) -->
+                <div class="border-box flex-[1.5] bg-white">
                     <div class="bg-white border-b border-gray-400 p-2 shrink-0">
                         <h3 class="section-title flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
@@ -119,12 +106,25 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Greeting & Realtime Clock Box (Desktop Right 40% / Mobile Position 1 Top) -->
+                <div class="border-box flex-1 bg-white">
+                    <div class="bg-white border-b border-gray-400 p-2 shrink-0">
+                        <h3 class="section-title flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Xin chào {{ current_user.fullname if current_user else 'Guest' }}, <span id="dynamic-greeting"></span>
+                        </h3>
+                    </div>
+                    <div class="bg-white flex-1 flex items-center justify-center p-3">
+                        <span id="realtime-clock" class="text-base md:text-xl font-medium tracking-wide text-gray-800 text-center">--:--</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Middle Section: Documents Checklist (Left) & Stats/Chart (Right) on PC -->
-            <div class="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 max-lg:contents">
-                <!-- Documents Checklist (Mobile Order 5 / Desktop Left Col) -->
-                <div class="flex-[1.5] border-box h-full max-lg:order-5 max-lg:min-h-[350px]">
+            <div class="flex flex-col-reverse lg:flex-row gap-4 flex-1 min-h-0">
+                <!-- Documents Checklist (Desktop Left Col / Mobile Position 5) -->
+                <div class="flex-[1.5] border-box h-full min-h-[300px] lg:min-h-0">
                     <div class="flex items-center gap-2 px-3 py-2 border-b border-gray-400 bg-white z-10 shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                         <h3 class="section-title">Documents Checklist</h3>
@@ -149,10 +149,10 @@
                     </div>
                 </div>
 
-                <!-- Stats & Chart Container (Mobile Order 3 & 4 / Desktop Right Col) -->
-                <div class="flex-1 flex flex-col gap-4 h-full max-lg:contents">
-                    <!-- 3 Stats Cards (Mobile Order 3 / Desktop Right Top) -->
-                    <div class="flex flex-row gap-2 shrink-0 max-lg:order-3">
+                <!-- Stats & Chart Container (Desktop Right Col / Mobile Positions 3 & 4) -->
+                <div class="flex-1 flex flex-col gap-4 h-full">
+                    <!-- 3 Stats Cards (Mobile Position 3 / Desktop Right Top) -->
+                    <div class="flex flex-row gap-2 shrink-0">
                         <div class="flex-1 border-2 border-[#0a192f] rounded-xl p-3 text-center bg-white shadow-sm flex flex-col justify-center">
                             <p class="text-xs font-bold mb-2 text-left">Total status</p>
                             <p id="stat-total-status" class="text-3xl font-bold text-[#0a192f]">0.0%</p>
@@ -167,8 +167,8 @@
                         </div>
                     </div>
 
-                    <!-- % Pending Items Chart (Mobile Order 4 / Desktop Right Bottom) -->
-                    <div class="border-box flex-1 w-full max-lg:order-4 max-lg:min-h-[220px]">
+                    <!-- % Pending Items Chart (Mobile Position 4 / Desktop Right Bottom) -->
+                    <div class="border-box flex-1 w-full min-h-[220px]">
                         <div class="bg-[#0a192f] text-white px-3 py-2 text-center shrink-0">
                             <h3 class="section-title tracking-wide">% Pending Items by Team</h3>
                         </div>
@@ -179,8 +179,8 @@
                 </div>
             </div>
 
-            <!-- Bottom Row: Active Models (Mobile Order 6 / Desktop Bottom) -->
-            <div class="border-box mt-auto h-[180px] shrink-0 max-lg:order-6 max-lg:h-auto max-lg:min-h-[200px] mb-4 lg:mb-0">
+            <!-- Bottom Row: Active Models (Mobile Position 6 / Desktop Bottom) -->
+            <div class="border-box mt-auto h-[180px] shrink-0 mb-4 lg:mb-0 min-h-[180px]">
                 <div class="flex items-center gap-2 px-3 py-2 border-b border-gray-400 bg-white z-10 shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
                     <h3 class="section-title">Active Models</h3>
