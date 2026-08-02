@@ -79,6 +79,8 @@ async def save_teams(
             
         cursor.execute("UPDATE users SET team = 'Others' WHERE team NOT IN (SELECT name FROM teams)")
         conn.commit()
+        from backend.core.gdrive_storage import sync_database_to_gdrive
+        sync_database_to_gdrive()
     except Exception as e:
         print("Error saving teams:", e)
         conn.rollback()
@@ -123,6 +125,8 @@ async def bulk_update(
                     WHERE id=?
                 """, (fullname[i], email[i], team[i], username[i], password[i], access_role[i], user_id[i]))
         conn.commit()
+        from backend.core.gdrive_storage import sync_database_to_gdrive
+        sync_database_to_gdrive()
     except Exception:
         conn.close()
         conn = get_db()
@@ -170,6 +174,8 @@ async def delete_user(request: Request, target_id: int):
         
     cursor.execute("DELETE FROM users WHERE id = ?", (target_id,))
     conn.commit()
+    from backend.core.gdrive_storage import sync_database_to_gdrive
+    sync_database_to_gdrive()
     conn.close()
     return {"success": True}
 

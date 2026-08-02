@@ -191,6 +191,8 @@ async def api_delete_model(request: Request, model_id: int):
     cursor.execute("DELETE FROM models WHERE id=?", (model_id,))
     cursor.execute("DELETE FROM model_checklist WHERE model_id=?", (model_id,))
     conn.commit()
+    from backend.core.gdrive_storage import sync_database_to_gdrive
+    sync_database_to_gdrive()
     conn.close()
     return {"success": True}
 
@@ -424,6 +426,8 @@ async def api_add_to_model_checklist(request: Request, model_id: int):
                 path = os.path.join(MP_READINESS_DATA_PATH, s_model, s_team, s_l1, s_l2).replace("\\", "/")
                 os.makedirs(path, exist_ok=True)
         conn.commit()
+        from backend.core.gdrive_storage import sync_database_to_gdrive
+        sync_database_to_gdrive()
     except Exception as e:
         conn.close()
         return {"error": str(e)}
@@ -450,6 +454,8 @@ async def api_remove_from_model_checklist(request: Request, model_id: int):
     cursor.execute(f"DELETE FROM document_versions WHERE model_checklist_id IN (SELECT id FROM model_checklist WHERE model_id=? AND id IN ({placeholders}))", [model_id] + item_ids)
     cursor.execute(f"DELETE FROM model_checklist WHERE model_id=? AND id IN ({placeholders})", [model_id] + item_ids)
     conn.commit()
+    from backend.core.gdrive_storage import sync_database_to_gdrive
+    sync_database_to_gdrive()
     conn.close()
     
     return {"success": True}
