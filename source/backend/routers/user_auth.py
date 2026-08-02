@@ -75,6 +75,7 @@ async def post_login(
 
 # Đăng xuất
 @router.get("/logout")
+@router.post("/logout")
 async def logout():
     response = RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
     response.delete_cookie(key="access_token")
