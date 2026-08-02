@@ -386,6 +386,8 @@ async def api_save_checklist_remark(request: Request, item_id: int):
     
     cursor.execute("UPDATE model_checklist SET remark = ?, updated_at = ? WHERE id = ?", (remark, new_updated_at, item_id))
     conn.commit()
+    from backend.core.gdrive_storage import sync_database_to_gdrive
+    sync_database_to_gdrive()
     conn.close()
     return {"success": True, "updated_at": new_updated_at}
 
