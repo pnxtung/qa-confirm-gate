@@ -335,7 +335,7 @@
                 </button>
             </form>
         </aside>
-        <main class="flex-1 overflow-y-auto p-4 max-lg:pb-28 flex flex-col gap-4 bg-[#f1f5f9] scrollbar-custom min-h-[100dvh]">
+        <main class="flex-1 overflow-y-auto p-4 pb-36 flex flex-col gap-4 bg-[#f1f5f9] scrollbar-custom min-h-0">
             <div class="flex items-center justify-between gap-2 max-lg:gap-1 mb-0 shrink-0 overflow-x-auto whitespace-nowrap no-scrollbar">
                 <div class="flex items-center space-x-2 shrink-0">
                     <svg class="w-6 h-6 max-lg:w-5 max-lg:h-5 text-gray-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
@@ -362,15 +362,15 @@
             {{ error }}
         </div>
         {% endif %}
-        <div class="flex max-lg:flex-col flex-1 gap-6 max-lg:gap-4 min-h-0 max-lg:h-auto w-full relative">
-            <form id="team-form" action="/admin/bulk_update_teams" method="POST" class="flex flex-col min-h-0 max-lg:w-full w-[30%] border-box max-lg:min-h-[250px]">
+        <div class="flex max-lg:flex-col shrink-0 gap-6 max-lg:gap-4 w-full relative">
+            <form id="team-form" action="/admin/bulk_update_teams" method="POST" class="flex flex-col border-box max-lg:w-full w-[30%] max-lg:h-[300px] lg:h-full min-h-0 shrink-0">
                 <div class="flex items-center justify-between px-4 py-3 border-b border-gray-400 bg-white z-10 shrink-0">
                     <div class="flex items-center gap-2">
                         <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                         <h3 class="section-title">Teams List</h3>
                     </div>
                 </div>
-                <div class="overflow-auto flex-1 relative bg-white">
+                <div class="overflow-auto flex-1 relative bg-white min-h-0">
                     <table class="resizable">
                         <thead>
                             <tr>
@@ -395,7 +395,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="p-3 border-t border-gray-400 shrink-0 flex items-center gap-2 max-lg:gap-1 overflow-x-auto whitespace-nowrap no-scrollbar">
+                <div class="p-3 border-t border-gray-400 shrink-0 flex items-center gap-2 max-lg:gap-1 overflow-x-auto whitespace-nowrap no-scrollbar bg-white z-10">
                     <button type="button" onclick="addTeamRow()" class="btn-primary shrink-0">+ Add Team</button>
                     <button type="button" onclick="removeTeamRow()" class="btn-primary shrink-0">- Remove Team</button>
                     <button type="button" onclick="moveTeamUp()" class="btn-primary shrink-0 flex items-center justify-center p-2" title="Move Up"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
@@ -403,8 +403,8 @@
                     <button type="submit" class="btn-primary shrink-0 ml-auto">Save Team</button>
                 </div>
             </form>
-            <form id="user-form" action="/admin/bulk_update" method="POST" class="flex flex-col flex-1 min-h-0 max-lg:w-full w-[70%] max-lg:min-h-[300px]">
-                <div class="border-box flex-1 min-h-0">
+            <form id="user-form" action="/admin/bulk_update" method="POST" class="flex flex-col border-box max-lg:w-full w-[70%] max-lg:h-[500px] lg:h-full min-h-0 shrink-0">
+                <div class="border-box flex-1 min-h-0 flex flex-col">
                 <div class="flex items-center justify-between px-4 py-3 border-b border-gray-400 bg-white z-10 shrink-0">
                     <div class="flex items-center gap-2">
                         <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
@@ -465,7 +465,7 @@
                         </tbody>
                     </table>
                 </div>
-            <div class="p-3 border-t border-gray-400 shrink-0 flex items-center gap-2 max-lg:gap-1 overflow-x-auto whitespace-nowrap no-scrollbar">
+            <div class="p-3 border-t border-gray-400 shrink-0 flex items-center gap-2 max-lg:gap-1 overflow-x-auto whitespace-nowrap no-scrollbar bg-white z-10">
                 <button type="button" onclick="addUserRow()" class="btn-primary shrink-0">
                     + Add User
                 </button>
@@ -479,6 +479,7 @@
             </div>
         </form>
         </div>
+        </main>
     <script>
         function toggleMobileMenu() {
             const sidebar = document.getElementById('main-sidebar');
