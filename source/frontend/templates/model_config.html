@@ -72,7 +72,7 @@
                 </button>
             </form>
         </aside>
-        <main class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 scrollbar-custom">
+        <main class="flex-1 overflow-y-auto p-4 max-lg:pb-28 flex flex-col gap-4 scrollbar-custom min-h-[100dvh]">
             {% set has_permission = can_edit_backend %}
             {% set is_my_lock = (locked_by == current_user.fullname) %}
             {% set can_edit = is_my_lock %}
