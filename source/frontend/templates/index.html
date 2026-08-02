@@ -72,7 +72,8 @@
                 </button>
             </form>
         </aside>
-        <main class="flex-1 overflow-y-auto p-3 md:p-4 flex flex-col gap-4 bg-white scrollbar-custom">
+        <main class="flex-1 overflow-y-auto p-3 md:p-4 flex flex-col gap-4 bg-white scrollbar-custom min-h-0">
+            <!-- Filter & Clock Section -->
             <div class="flex flex-col lg:flex-row gap-4 shrink-0">
                 <div class="border-box flex-[1.5]">
                     <div class="bg-white border-b border-gray-400 p-2">
@@ -81,54 +82,50 @@
                             Model Filter
                         </h3>
                     </div>
-                    <div class="bg-white overflow-x-auto touch-scroll">
-                        <table class="resizable w-full">
-                            <tbody>
-                                <tr class="flex flex-col sm:table-row">
-                                    <th class="p-2 border-l-0 border-t-0 border-b-0 bg-white text-left font-bold text-black border-gray-400 w-auto min-w-[120px]">
-                                        <div class="flex items-center"><div class="w-1.5 h-1.5 bg-black rounded-sm mr-2"></div> Search Name</div>
-                                    </th>
-                                    <td class="p-0 border-t-0 border-b-0 text-center font-medium w-auto min-w-[150px]">
-                                        <input type="text" id="modelInput" class="excel-input text-center" placeholder="Nhập tên Model">
-                                    </td>
-                                    <th class="p-2 border-t-0 border-b-0 bg-white text-left font-bold text-black border-gray-400 w-auto min-w-[120px]">
-                                        <div class="flex items-center"><div class="w-1.5 h-1.5 bg-black rounded-sm mr-2"></div> Select Model</div>
-                                    </th>
-                                    <td class="p-0 border-t-0 border-b-0 text-center w-auto min-w-[150px]">
-                                        <select id="modelSelect" class="excel-input text-center font-medium cursor-pointer">
-                                            <option value="">Chọn trong Combo box</option>
-                                            {% for model in models %}
-                                                <option value="{{ model.id }}">{{ model.name }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </td>
-                                    <td class="p-0 border-none bg-white w-full sm:w-[100px]">
-                                        <button id="btn-query-home" class="btn-primary w-full h-full rounded-none py-2 sm:py-0">Query</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="bg-white p-2">
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 text-xs">
+                            <div class="flex items-center gap-1 min-w-[120px] font-bold">
+                                <div class="w-1.5 h-1.5 bg-black rounded-sm"></div> Search Name
+                            </div>
+                            <div class="flex-1">
+                                <input type="text" id="modelInput" class="form-input text-center text-xs py-1.5" placeholder="Nhập tên Model">
+                            </div>
+                            <div class="flex items-center gap-1 min-w-[120px] font-bold mt-2 sm:mt-0">
+                                <div class="w-1.5 h-1.5 bg-black rounded-sm"></div> Select Model
+                            </div>
+                            <div class="flex-1">
+                                <select id="modelSelect" class="form-input text-center text-xs py-1.5 cursor-pointer font-medium">
+                                    <option value="">Chọn trong Combo box</option>
+                                    {% for model in models %}
+                                        <option value="{{ model.id }}">{{ model.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button id="btn-query-home" class="btn-primary px-5 py-2 shrink-0 font-bold min-h-[38px]">Query</button>
+                        </div>
                     </div>
                 </div>
                 <div class="border-box flex-1">
                     <div class="bg-white border-b border-gray-400 p-2">
                         <h3 class="section-title flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            Xin chào {{ current_user.fullname }}, <span id="dynamic-greeting"></span>
+                            Xin chào {{ current_user.fullname if current_user else 'Guest' }}, <span id="dynamic-greeting"></span>
                         </h3>
                     </div>
-                    <div class="bg-white flex-1 flex items-center justify-center p-3">
-                        <span id="realtime-clock" class="text-lg md:text-xl font-medium tracking-wide text-gray-800 text-center">--:--</span>
+                    <div class="bg-white flex-1 flex items-center justify-center p-3 min-h-[50px]">
+                        <span id="realtime-clock" class="text-base md:text-xl font-medium tracking-wide text-gray-800 text-center">--:--</span>
                     </div>
                 </div>
             </div>
-            <div class="flex flex-col xl:flex-row gap-4 flex-1 min-h-0 md:overflow-hidden">
-                <div class="flex-[1.5] border-box min-h-[300px] md:min-h-0 h-full">
+
+            <!-- Documents Checklist & Stats Section -->
+            <div class="flex flex-col xl:flex-row gap-4 flex-1 min-h-0">
+                <div class="flex-[1.5] border-box min-h-[350px] md:min-h-0 h-full">
                     <div class="flex items-center gap-2 px-3 py-2 border-b border-gray-400 bg-white z-10 shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                         <h3 class="section-title">Documents Checklist</h3>
                     </div>
-                    <div class="overflow-auto touch-scroll flex-1 relative bg-white">
+                    <div class="overflow-auto touch-scroll flex-1 relative bg-white min-h-[250px]">
                         <table class="resizable">
                             <thead>
                                 <tr>
@@ -148,36 +145,38 @@
                     </div>
                 </div>
                 <div class="flex-1 flex flex-col gap-4 h-full">
-                    <div class="flex gap-2 shrink-0">
-                        <div class="flex-1 border-2 border-[#0a192f] rounded-xl p-3 text-center bg-white shadow-sm flex flex-col justify-center">
-                            <p class="text-xs font-bold mb-2 text-left">Total status</p>
-                            <p id="stat-total-status" class="text-3xl font-bold text-[#0a192f]">0.0%</p>
+                    <div class="flex flex-row gap-2 shrink-0">
+                        <div class="flex-1 border-2 border-[#0a192f] rounded-xl p-2 md:p-3 text-center bg-white shadow-sm flex flex-col justify-center">
+                            <p class="text-[10px] md:text-xs font-bold mb-1 md:mb-2 text-left">Total status</p>
+                            <p id="stat-total-status" class="text-xl md:text-3xl font-bold text-[#0a192f]">0.0%</p>
                         </div>
-                        <div class="flex-1 border-2 border-[#0a192f] rounded-xl p-3 text-center bg-white shadow-sm flex flex-col justify-center">
-                            <p class="text-xs font-bold mb-2 text-left">Documents</p>
-                            <p id="stat-documents" class="text-3xl font-bold text-[#0a192f]">0/0</p>
+                        <div class="flex-1 border-2 border-[#0a192f] rounded-xl p-2 md:p-3 text-center bg-white shadow-sm flex flex-col justify-center">
+                            <p class="text-[10px] md:text-xs font-bold mb-1 md:mb-2 text-left">Documents</p>
+                            <p id="stat-documents" class="text-xl md:text-3xl font-bold text-[#0a192f]">0/0</p>
                         </div>
-                        <div class="flex-1 border-2 border-[#0a192f] rounded-xl p-3 text-center bg-white shadow-sm flex flex-col justify-center">
-                            <p class="text-xs font-bold mb-2 text-left">QA Confirmed</p>
-                            <p id="stat-qa-confirmed" class="text-3xl font-bold text-[#0a192f]">0/0</p>
+                        <div class="flex-1 border-2 border-[#0a192f] rounded-xl p-2 md:p-3 text-center bg-white shadow-sm flex flex-col justify-center">
+                            <p class="text-[10px] md:text-xs font-bold mb-1 md:mb-2 text-left">QA Confirmed</p>
+                            <p id="stat-qa-confirmed" class="text-xl md:text-3xl font-bold text-[#0a192f]">0/0</p>
                         </div>
                     </div>
-                    <div class="border-box flex-1 w-full">
+                    <div class="border-box flex-1 w-full min-h-[200px]">
                         <div class="bg-[#0a192f] text-white px-3 py-2 text-center shrink-0">
                             <h3 class="section-title tracking-wide">% Pending Items by Team</h3>
                         </div>
-                        <div id="chart-pending-teams" class="text-[11px] font-medium w-full flex-1 flex flex-col justify-between py-2 px-3 overflow-y-auto">
+                        <div id="chart-pending-teams" class="text-[11px] font-medium w-full flex-1 flex flex-col justify-between py-2 px-3 overflow-y-auto min-h-[150px]">
                             <!-- Dynamic chart rows will be inserted here -->
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="border-box mt-auto h-[180px] shrink-0">
+
+            <!-- Active Models Section -->
+            <div class="border-box min-h-[220px] shrink-0 mb-4">
                 <div class="flex items-center gap-2 px-3 py-2 border-b border-gray-400 bg-white z-10 shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
                     <h3 class="section-title">Active Models</h3>
                 </div>
-                <div class="overflow-auto touch-scroll flex-1 relative bg-white">
+                <div class="overflow-auto touch-scroll flex-1 relative bg-white min-h-[150px]">
                     <table class="text-center resizable">
                         <thead>
                             <tr>
