@@ -103,46 +103,46 @@
         </aside>
         <main class="flex-1 p-4 flex flex-col min-h-0 w-full overflow-hidden">
     <div class="border-box flex-1 flex flex-col min-h-0">
-        <div class="p-3 flex flex-wrap items-center justify-between gap-4 shrink-0 border-b border-gray-400">
-            <div class="flex items-center gap-2">
+        <div class="p-3 flex max-lg:flex-col max-lg:items-start items-center justify-between gap-3 max-lg:gap-2 shrink-0 border-b border-gray-400">
+            <div class="flex items-center gap-2 shrink-0">
                 <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <h3 class="section-title">Upload Documents{% if model_name %} - {{ model_name }}{% endif %}</h3>
             </div>
-            <div class="flex gap-2 items-center">
-                <span id="lock-timer" class="text-red-600 font-bold text-sm hidden mr-2"></span>
+            <div class="flex items-center gap-1.5 max-lg:gap-1 max-lg:w-full overflow-x-auto whitespace-nowrap no-scrollbar">
+                <span id="lock-timer" class="text-red-600 font-bold text-sm hidden mr-2 shrink-0"></span>
                 {% if checklist_item and current_user.access_role == 'Admin' %}
-                <button class="btn-action bg-red-600 text-white border-transparent" id="btn-cancel-upload" onclick="cancelUpload()">Cancel Upload</button>
-                <button class="btn-action bg-red-600 text-white border-transparent" id="btn-del-version" onclick="deleteVersion()">- Del</button>
+                <button class="btn-action bg-red-600 text-white border-transparent shrink-0" id="btn-cancel-upload" onclick="cancelUpload()">Cancel Upload</button>
+                <button class="btn-action bg-red-600 text-white border-transparent shrink-0" id="btn-del-version" onclick="deleteVersion()">- Del</button>
                 {% endif %}
                 {% if checklist_item and (current_user.team == checklist_item.team or current_user.access_role == 'Admin') %}
-                <button class="btn-action border-transparent" id="btn-new-version" onclick="createNewVersion()">+ New</button>
-                <button class="btn-action" id="btn-edit" onclick="handleEditClick()">Edit</button>
-                <button class="btn-action" id="btn-save" onclick="saveVersion()">Save</button>
-                <button class="btn-action flex items-center gap-1 w-[100px]" id="btn-upload" onclick="uploadVersion()">
+                <button class="btn-action border-transparent shrink-0" id="btn-new-version" onclick="createNewVersion()">+ New</button>
+                <button class="btn-action shrink-0" id="btn-edit" onclick="handleEditClick()">Edit</button>
+                <button class="btn-action shrink-0" id="btn-save" onclick="saveVersion()">Save</button>
+                <button class="btn-action flex items-center gap-1 shrink-0" id="btn-upload" onclick="uploadVersion()">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                     Upload
                 </button>
                 {% else %}
-                <button class="btn-action bg-gray-400 text-gray-700 border-transparent cursor-not-allowed" disabled id="btn-new-version">+ New</button>
-                <button class="btn-action bg-gray-400 text-gray-700 border-transparent cursor-not-allowed" disabled id="btn-edit">Edit</button>
-                <button class="btn-action bg-gray-400 text-gray-700 border-transparent cursor-not-allowed" disabled id="btn-save">Save</button>
-                <button class="btn-action flex items-center gap-1 bg-gray-400 text-gray-700 border-transparent cursor-not-allowed w-[100px]" disabled id="btn-upload">
+                <button class="btn-action bg-gray-400 text-gray-700 border-transparent cursor-not-allowed shrink-0" disabled id="btn-new-version">+ New</button>
+                <button class="btn-action bg-gray-400 text-gray-700 border-transparent cursor-not-allowed shrink-0" disabled id="btn-edit">Edit</button>
+                <button class="btn-action bg-gray-400 text-gray-700 border-transparent cursor-not-allowed shrink-0" disabled id="btn-save">Save</button>
+                <button class="btn-action flex items-center gap-1 bg-gray-400 text-gray-700 border-transparent cursor-not-allowed shrink-0" disabled id="btn-upload">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                     Upload
                 </button>
                 {% endif %}
             </div>
         </div>
-        <div class="shrink-0 text-sm border-b border-gray-400 overflow-x-auto bg-white">
-            <table class="resizable">
+        <div class="shrink-0 text-sm border-b border-gray-400 overflow-x-auto bg-white no-scrollbar">
+            <table class="resizable w-full border-collapse">
                 <tbody>
                     <tr>
-                        <th class="p-0 border-l-0 border-t-0 bg-white text-left font-bold text-black border-gray-400 w-auto min-w-[140px]">
-                            <div class="flex items-center"><div class="w-1.5 h-1.5 bg-black rounded-full mr-2"></div> Document Type</div>
+                        <th class="p-0 border-l-0 border-t-0 border-b-0 bg-white text-left font-bold text-black border-gray-400 min-w-[130px]">
+                            <div class="flex items-center px-2 py-1"><div class="w-1.5 h-1.5 bg-black rounded-full mr-1.5"></div> Document Type</div>
                         </th>
-                        <td class="p-0 border-t-0 text-center font-medium w-auto min-w-[150px] bg-gray-50">
+                        <td class="p-0 border-t-0 border-b-0 text-center font-medium min-w-[140px] bg-gray-50">
                             {% if allowed_items %}
-                                <select class="w-full bg-transparent outline-none cursor-pointer" onchange="if(this.value) window.location.href='/upload/' + this.value;">
+                                <select class="w-full bg-transparent outline-none cursor-pointer py-1 px-1" onchange="if(this.value) window.location.href='/upload/' + this.value;">
                                     <option value="">-- Select Document Type --</option>
                                     {% for ai in allowed_items %}
                                         <option value="{{ ai.id }}" 
@@ -156,38 +156,21 @@
                                 {% if checklist_item %}{{ checklist_item.level_1 }}/{{ checklist_item.level_2 }}{% else %}N/A{% endif %}
                             {% endif %}
                         </td>
-                        <th class="p-0 border-t-0 bg-white text-left font-bold text-black border-gray-400 w-auto min-w-[100px]">
-                            <div class="flex items-center"><div class="w-1.5 h-1.5 bg-black rounded-full mr-2"></div> Version</div>
+                        <th class="p-0 border-t-0 border-b-0 bg-white text-left font-bold text-black border-gray-400 min-w-[90px]">
+                            <div class="flex items-center px-2 py-1"><div class="w-1.5 h-1.5 bg-black rounded-full mr-1.5"></div> Main PIC</div>
                         </th>
-                        <td class="p-0 border-t-0 text-center w-auto min-w-[100px]">
+                        <td class="p-0 border-t-0 border-b-0 text-center font-medium min-w-[90px] bg-gray-50 px-2 py-1" id="main-pic-display"></td>
+                        <th class="p-0 border-t-0 border-b-0 bg-white text-left font-bold text-black border-gray-400 min-w-[80px]">
+                            <div class="flex items-center px-2 py-1"><div class="w-1.5 h-1.5 bg-black rounded-full mr-1.5"></div> Version</div>
+                        </th>
+                        <td class="p-0 border-t-0 border-b-0 text-center min-w-[80px]">
                             <select id="version-select" class="excel-input text-center font-medium cursor-pointer" onchange="loadSelectedVersion()">
                             </select>
                         </td>
-                        <th class="p-0 border-t-0 bg-gray-50 text-left font-bold text-black border-gray-400 w-auto min-w-[120px]" rowspan="2">
-                            <div class="flex items-center justify-start h-full">
-                                <div class="w-1.5 h-1.5 bg-black rounded-none mr-2"></div> Attachment
-                            </div>
+                        <th class="p-0 border-t-0 border-b-0 bg-white text-left font-bold text-black border-gray-400 min-w-[110px]">
+                            <div class="flex items-center px-2 py-1"><div class="w-1.5 h-1.5 bg-black rounded-full mr-1.5"></div> Upload time</div>
                         </th>
-                        <td class="p-0 border-t-0 w-auto min-w-[220px]" rowspan="2">
-                            <div id="file-list" class="flex flex-col items-stretch gap-1 overflow-y-auto no-scrollbar max-h-[72px] text-xs w-full pr-1">
-                            </div>
-                        </td>
-                        <td class="p-0 pr-3 border-t-0 border-b border-gray-400 w-auto min-w-[100px] align-middle text-right bg-white">
-                            <button class="btn-action w-[100px] justify-center py-1 inline-flex bg-gray-400 text-gray-700 cursor-not-allowed" disabled id="btn-add-attachment" onclick="addAttachment()">+ Add files</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th class="p-0 border-l-0 border-b-0 bg-white text-left font-bold text-black border-gray-400 w-auto">
-                            <div class="flex items-center"><div class="w-1.5 h-1.5 bg-black rounded-full mr-2"></div> Main PIC</div>
-                        </th>
-                        <td class="p-0 border-b-0 text-center font-medium w-auto bg-gray-50" id="main-pic-display"></td>
-                        <th class="p-0 border-b-0 bg-white text-left font-bold text-black border-gray-400 w-auto">
-                            <div class="flex items-center"><div class="w-1.5 h-1.5 bg-black rounded-full mr-2"></div> Upload time</div>
-                        </th>
-                        <td class="p-0 border-b-0 text-center w-auto text-xs bg-gray-50" id="time-display"></td>
-                        <td class="p-0 pr-3 border-b-0 border-t-0 border-gray-400 w-auto min-w-[100px] align-middle text-right bg-white">
-                            <button class="btn-action w-[100px] justify-center py-1 inline-flex bg-gray-400 text-gray-700 cursor-not-allowed" disabled id="btn-del-attachment" onclick="delAttachment()">- Del files</button>
-                        </td>
+                        <td class="p-0 border-t-0 border-b-0 border-r-0 text-center text-xs bg-gray-50 min-w-[130px] px-2 py-1" id="time-display"></td>
                     </tr>
                 </tbody>
             </table>
@@ -195,18 +178,30 @@
         <div class="flex-1 flex flex-col min-h-0 bg-white border-b border-gray-400">
             <div id="editor-container" class="flex-1"></div>
         </div>
+        <div class="p-2 border-b border-gray-400 bg-white shrink-0 flex items-center justify-between gap-3 overflow-x-auto no-scrollbar">
+            <div class="flex items-center gap-2 min-w-0 flex-1">
+                <div class="flex items-center font-bold text-sm text-black shrink-0">
+                    <div class="w-1.5 h-1.5 bg-black rounded-none mr-1.5"></div> Attachment:
+                </div>
+                <div id="file-list" class="flex items-center gap-2 overflow-x-auto no-scrollbar text-xs flex-1">
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <button class="btn-action justify-center py-1 inline-flex border-transparent bg-gray-400 text-gray-700 cursor-not-allowed shrink-0" disabled id="btn-add-attachment" onclick="addAttachment()">Browse</button>
+            </div>
+        </div>
         <div class="flex flex-col h-[200px] shrink-0 bg-white">
-            <div class="flex items-center justify-between px-3 py-2 border-b border-gray-400 bg-white z-10 shrink-0">
-                <div class="flex items-center gap-2">
+            <div class="flex max-lg:flex-col max-lg:items-start items-center justify-between px-3 py-2 border-b border-gray-400 bg-white z-10 shrink-0 gap-2">
+                <div class="flex items-center gap-2 shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                     <h3 class="section-title">Confirmation Progress</h3>
                 </div>
-                  <div class="flex gap-2">
-                      <button class="btn-action bg-gray-400 text-gray-700 cursor-not-allowed" disabled id="btn-add-step" onclick="addProgressStep()">+ Add Step</button>
-                      <button class="btn-action bg-gray-400 text-gray-700 cursor-not-allowed" disabled id="btn-del-step" onclick="delProgressStep()">- Del Step</button>
-                      <button class="btn-action bg-gray-400 text-gray-700 cursor-not-allowed px-2 border-transparent" disabled id="btn-up-step" onclick="moveProgressStepUp()"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
-                      <button class="btn-action bg-gray-400 text-gray-700 cursor-not-allowed px-2 border-transparent" disabled id="btn-down-step" onclick="moveProgressStepDown()"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
-                      <button class="btn-action bg-gray-400 text-gray-700 cursor-not-allowed" disabled id="btn-confirm-step" onclick="openConfirmModal()">Confirm</button>
+                  <div class="flex items-center gap-1.5 max-lg:gap-1 max-lg:w-full shrink-0 overflow-x-auto whitespace-nowrap no-scrollbar">
+                      <button class="btn-action bg-gray-400 text-gray-700 cursor-not-allowed shrink-0" disabled id="btn-add-step" onclick="addProgressStep()">+ Add Step</button>
+                      <button class="btn-action bg-gray-400 text-gray-700 cursor-not-allowed shrink-0" disabled id="btn-del-step" onclick="delProgressStep()">- Del Step</button>
+                      <button class="btn-action bg-gray-400 text-gray-700 cursor-not-allowed px-2 border-transparent shrink-0" disabled id="btn-up-step" onclick="moveProgressStepUp()"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
+                      <button class="btn-action bg-gray-400 text-gray-700 cursor-not-allowed px-2 border-transparent shrink-0" disabled id="btn-down-step" onclick="moveProgressStepDown()"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                      <button class="btn-action bg-gray-400 text-gray-700 cursor-not-allowed shrink-0" disabled id="btn-confirm-step" onclick="openConfirmModal()">Confirm</button>
                   </div>
               </div>
               <div class="overflow-auto flex-1 relative bg-white">
@@ -438,12 +433,9 @@
             const canEdit = (isDraft && isLatest && IS_UPLOADER) || (isTemplate && IS_ADMIN);
 
             const btnAddFile = document.getElementById('btn-add-attachment');
-            const btnDelFile = document.getElementById('btn-del-attachment');
-            if (btnAddFile && btnDelFile) {
+            if (btnAddFile) {
                 btnAddFile.disabled = true;
-                btnDelFile.disabled = true;
                 btnAddFile.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
-                btnDelFile.classList.add('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
             }
 
             ['btn-edit', 'btn-upload'].forEach(id => {
@@ -554,12 +546,9 @@
         }
         
         const btnAddFile = document.getElementById('btn-add-attachment');
-        const btnDelFile = document.getElementById('btn-del-attachment');
-        if (btnAddFile && btnDelFile) {
+        if (btnAddFile) {
             btnAddFile.disabled = false;
-            btnDelFile.disabled = false;
             btnAddFile.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
-            btnDelFile.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
         }
 
         if (tinyEditor) tinyEditor.mode.set('design');
@@ -998,6 +987,18 @@
         } catch(e) { console.error(e); }
     }
 
+    function deleteSingleFile(type, id) {
+        if (!isEditingMode) return;
+        if (type === 'saved') {
+            if (!pendingDeletes.includes(id)) {
+                pendingDeletes.push(id);
+            }
+        } else if (type === 'pending') {
+            pendingUploads.splice(id, 1);
+        }
+        renderFileList();
+    }
+
     function renderFileList() {
         const fileList = document.getElementById('file-list');
         if (!fileList) return;
@@ -1008,21 +1009,55 @@
             currentVersion.files.forEach(f => {
                 if (pendingDeletes.includes(f.id)) return;
                 const div = document.createElement('div');
-                div.className = 'shrink-0 p-1 border border-transparent hover:border-gray-300 w-full cursor-pointer hover:bg-gray-100 whitespace-nowrap overflow-hidden text-ellipsis rounded-sm text-black';
-                div.textContent = f.filename;
-                div.id = 'file-' + f.id;
-                div.onclick = () => selectFile(f.id);
-                div.ondblclick = () => downloadFile(f.id);
+                div.className = 'shrink-0 flex items-center justify-between w-[150px] min-w-[150px] px-2 py-0.5 border border-gray-300 bg-gray-50 hover:bg-blue-50 rounded text-xs text-gray-800 transition-colors shadow-sm';
+                div.title = f.filename + ' (Nhấp đúp để tải về)';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'truncate flex-1 font-medium cursor-pointer';
+                nameSpan.textContent = f.filename;
+                nameSpan.ondblclick = () => downloadFile(f.id);
+                nameSpan.onclick = () => selectFile(f.id);
+
+                div.appendChild(nameSpan);
+
+                if (isEditingMode) {
+                    const xBtn = document.createElement('button');
+                    xBtn.type = 'button';
+                    xBtn.className = 'shrink-0 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full w-4 h-4 flex items-center justify-center font-bold text-xs ml-1 transition-colors';
+                    xBtn.textContent = '✕';
+                    xBtn.title = 'Xóa file này';
+                    xBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        deleteSingleFile('saved', f.id);
+                    };
+                    div.appendChild(xBtn);
+                }
+
                 fileList.appendChild(div);
             });
         }
         
         pendingUploads.forEach((f, idx) => {
             const div = document.createElement('div');
-            div.className = 'shrink-0 p-1 border border-transparent hover:border-gray-300 w-full cursor-pointer hover:bg-gray-100 whitespace-nowrap overflow-hidden text-ellipsis rounded-sm text-green-600 font-medium italic';
-            div.textContent = f.name + ' (mới)';
-            div.id = 'file-pending-' + idx;
-            div.onclick = () => selectFile('pending-' + idx);
+            div.className = 'shrink-0 flex items-center justify-between w-[150px] min-w-[150px] px-2 py-0.5 border border-green-300 bg-green-50 rounded text-xs text-green-700 font-medium italic shadow-sm';
+            div.title = f.name + ' (File mới chọn)';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'truncate flex-1';
+            nameSpan.textContent = f.name + ' (mới)';
+
+            const xBtn = document.createElement('button');
+            xBtn.type = 'button';
+            xBtn.className = 'shrink-0 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full w-4 h-4 flex items-center justify-center font-bold text-xs ml-1 transition-colors';
+            xBtn.textContent = '✕';
+            xBtn.title = 'Hủy chọn file';
+            xBtn.onclick = (e) => {
+                e.stopPropagation();
+                deleteSingleFile('pending', idx);
+            };
+
+            div.appendChild(nameSpan);
+            div.appendChild(xBtn);
             fileList.appendChild(div);
         });
     }

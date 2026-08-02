@@ -51,6 +51,14 @@ body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #000;
 .btn-primary:hover, .btn-action:hover { opacity: 0.9; }
 .text-red-btn { color: #ef4444; }
 
+@media (max-width: 1023px) {
+    .btn-primary, .btn-action {
+        padding: 4px 4px !important;
+        font-size: 0.7rem !important;
+        gap: 0.15rem !important;
+    }
+}
+
 /* Table Components */
 table { 
     width: 100%;

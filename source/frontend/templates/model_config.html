@@ -72,18 +72,25 @@
                 </button>
             </form>
         </aside>
-        <main class="flex-1 overflow-y-auto p-4 flex flex-col gap-6 scrollbar-custom">
+        <main class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 scrollbar-custom">
             {% set has_permission = can_edit_backend %}
             {% set is_my_lock = (locked_by == current_user.fullname) %}
             {% set can_edit = is_my_lock %}
             
-            {% if has_permission %}
-            <div class="flex items-center justify-end gap-4 shrink-0">
-                <div id="editing-time-container" class="{% if not is_my_lock %}hidden{% endif %} text-red-600 font-bold text-sm flex items-center gap-1">
-                    <span>Editing Time :</span> <span id="config-timer-display">10:00</span>
+            <div class="flex items-center justify-between gap-2 max-lg:gap-1 mb-0 shrink-0 overflow-x-auto whitespace-nowrap no-scrollbar">
+                <div class="flex items-center space-x-2 shrink-0">
+                    <svg class="w-6 h-6 max-lg:w-5 max-lg:h-5 text-gray-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span class="text-xl max-lg:text-base font-bold tracking-wide shrink-0">Model Config</span>
                 </div>
-                <button id="btn-start-edit" class="btn-primary {% if is_my_lock %}opacity-50 cursor-not-allowed{% endif %}" {% if is_my_lock %}disabled{% endif %}>Start Edit</button>
-                <button id="btn-end-edit" class="btn-primary {% if not is_my_lock %}opacity-50 cursor-not-allowed{% endif %}" {% if not is_my_lock %}disabled{% endif %}>End Edit</button>
+                {% if has_permission %}
+                <div class="flex items-center gap-2 max-lg:gap-1 shrink-0">
+                    <div id="editing-time-container" class="{% if not is_my_lock %}hidden{% endif %} text-red-600 font-bold text-xs flex items-center gap-1 shrink-0">
+                        Editing Time: <span id="config-timer-display">10:00</span>
+                    </div>
+                    <button id="btn-start-edit" class="btn-primary shrink-0 {% if is_my_lock %}opacity-50 cursor-not-allowed{% endif %}" {% if is_my_lock %}disabled{% endif %}>Start Edit</button>
+                    <button id="btn-end-edit" class="btn-primary !bg-red-600 shrink-0 {% if not is_my_lock %}opacity-50 cursor-not-allowed{% endif %}" {% if not is_my_lock %}disabled{% endif %}>End Edit</button>
+                </div>
+                {% endif %}
             </div>
             
             <script>
@@ -130,9 +137,8 @@
                 })();
                 {% endif %}
             </script>
-            {% endif %}
             
-            <div class="border-box h-[40%] relative">
+            <div class="border-box h-[360px] min-h-[360px] relative">
 
                 <div class="p-3 flex items-center justify-between border-b border-gray-400 shrink-0">
                     <div class="flex items-center gap-2">
@@ -159,7 +165,7 @@
                         </thead>
                         <tbody>
                             {% for model in models %}
-                            <tr data-id="{{ model.id }}" class="cursor-pointer hover:bg-gray-100 model-row">
+                            <tr data-id="{{ model.id }}" class="hover:bg-gray-100 model-row">
                                 <td class="p-0 border-l-0"><input type="text" class="excel-input text-center model-input" data-field="name" value="{{ model.name or '' }}" {% if not can_edit %}readonly{% endif %}></td>
                                 <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="model_type" value="{{ model.model_type or '' }}" {% if not can_edit %}readonly{% endif %}></td>
                                 <td class="p-0"><input type="text" class="excel-input text-center model-input" data-field="customer" value="{{ model.customer or '' }}" {% if not can_edit %}readonly{% endif %}></td>
@@ -172,30 +178,30 @@
                                 <td class="p-0">
                                     <select class="excel-input text-center model-input" data-field="activate" {% if not can_edit %}disabled{% endif %}>
                                         <option value="Yes" {% if model.activate == 'Yes' %}selected{% endif %}>Yes</option>
-                                        <option value="No" {% if model.activate != 'Yes' %}selected{% endif %}>No</option>
+                                        <option value="No" {% if model.activate == 'No' %}selected{% endif %}>No</option>
                                     </select>
                                 </td>
-                                <td class="p-0 border-r-0"><input type="checkbox" class="w-4 h-4 cursor-pointer model-select-checkbox"></td>
+                                <td class="p-0 border-r-0 text-center"><input type="radio" name="model_select" class="w-4 h-4 cursor-pointer model-radio" value="{{ model.id }}"></td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                <div class="p-3 border-t border-gray-400 shrink-0 flex gap-2">
-                      <button id="btn-save-model-list" class="btn-primary">Save</button>
-                      <button id="btn-create-model" class="btn-primary">+ New Model</button>
-                      <button id="btn-delete-model" class="btn-primary">- Delete Model</button>
-                      <button id="btn-up-model" class="btn-primary px-2">
+                <div class="p-3 border-t border-gray-400 shrink-0 flex items-center gap-2 overflow-x-auto whitespace-nowrap no-scrollbar">
+                      <button id="btn-save-model-list" class="btn-primary shrink-0">Save</button>
+                      <button id="btn-create-model" class="btn-primary shrink-0">+ New Model</button>
+                      <button id="btn-delete-model" class="btn-primary shrink-0">- Delete Model</button>
+                      <button id="btn-up-model" class="btn-primary shrink-0 px-2">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
                       </button>
-                      <button id="btn-down-model" class="btn-primary px-2">
+                      <button id="btn-down-model" class="btn-primary shrink-0 px-2">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                       </button>
-                      <button id="btn-query-model" class="btn-primary ml-auto">Query</button>
+                      <button id="btn-query-model" class="btn-primary shrink-0 ml-auto">Query</button>
                 </div>
             </div>
-            <div class="flex-1 flex gap-6 min-h-0 relative h-[50%]">
-                <div class="flex-1 border-box relative">
+            <div class="flex-1 flex max-lg:flex-col gap-6 max-lg:gap-4 min-h-0 max-lg:h-auto lg:h-[480px] relative">
+                <div class="flex-1 border-box h-[480px] min-h-[480px] relative">
                     <div class="p-3 flex items-center border-b border-gray-400 shrink-0">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                         <h3 class="section-title">Master Checklist</h3>
@@ -229,20 +235,20 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="p-3 border-t border-gray-400 shrink-0 flex gap-2">
-                        <button id="btn-save-master-list" class="btn-primary">Save</button>
-                        <button id="btn-new-item" class="btn-primary">+ New Item</button>
-                        <button id="btn-remove-item" class="btn-primary">- Remove Item</button>
-                        <button type="button" id="btn-select-all-master" class="btn-primary ml-auto" data-selected="false">@</button>
-                        <button id="btn-add-to-model" class="btn-primary">Add to Model</button>
+                    <div class="p-3 border-t border-gray-400 shrink-0 flex items-center gap-2 overflow-x-auto whitespace-nowrap no-scrollbar">
+                        <button id="btn-save-master-list" class="btn-primary shrink-0">Save</button>
+                        <button id="btn-new-item" class="btn-primary shrink-0">+ New Item</button>
+                        <button id="btn-remove-item" class="btn-primary shrink-0">- Remove Item</button>
+                        <button type="button" id="btn-select-all-master" class="btn-primary shrink-0 ml-auto" data-selected="false">@</button>
+                        <button id="btn-add-to-model" class="btn-primary shrink-0">Add to Model</button>
                     </div>
                 </div>
-                <div class="flex items-center justify-center shrink-0 w-8">
-                    <svg class="w-12 h-12 text-gray-400 opacity-70" fill="currentColor" viewBox="0 0 20 20">
+                <div class="flex items-center justify-center shrink-0 w-8 max-lg:w-full max-lg:h-8 max-lg:py-2">
+                    <svg class="w-12 h-12 max-lg:w-8 max-lg:h-8 max-lg:rotate-90 text-gray-400 opacity-70" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                     </svg>
                 </div>
-                <div class="flex-1 border-box relative">
+                <div class="flex-1 border-box h-[480px] min-h-[480px] relative">
                     <div class="p-3 flex items-center border-b border-gray-400 shrink-0">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                         <h3 class="section-title">Model Checklist : <span id="current-model-name" class="text-blue-800 ml-2">-- No Selection --</span></h3>
@@ -261,10 +267,10 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="p-3 border-t border-gray-400 shrink-0 flex gap-2">
-                        <button id="btn-save-model-checklist" class="btn-primary">Save</button>
-                        <button type="button" id="btn-select-all-model" class="btn-primary ml-auto" data-selected="false">@</button>
-                        <button id="btn-remove-from-model" class="btn-primary">Remove from model</button>
+                    <div class="p-3 border-t border-gray-400 shrink-0 flex items-center gap-2 overflow-x-auto whitespace-nowrap no-scrollbar">
+                        <button id="btn-save-model-checklist" class="btn-primary shrink-0">Save</button>
+                        <button type="button" id="btn-select-all-model" class="btn-primary shrink-0 ml-auto" data-selected="false">@</button>
+                        <button id="btn-remove-from-model" class="btn-primary shrink-0">Remove from model</button>
                     </div>
                 </div>
             </div>
