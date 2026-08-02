@@ -79,14 +79,15 @@ async def save_teams(
             
         cursor.execute("UPDATE users SET team = 'Others' WHERE team NOT IN (SELECT name FROM teams)")
         conn.commit()
+        conn.close()
         from backend.core.gdrive_storage import sync_database_to_gdrive
         sync_database_to_gdrive()
+        return {"success": True}
     except Exception as e:
         print("Error saving teams:", e)
-        conn.rollback()
-    finally:
-        conn.close()
-    return {"success": True}
+        try: conn.close()
+        except: pass
+        return {"success": False, "error": str(e)}
 
 # Lưu hàng loạt thay đổi (Thêm mới và Cập nhật) User
 @router.post("/admin/bulk_update")
@@ -125,10 +126,13 @@ async def bulk_update(
                     WHERE id=?
                 """, (fullname[i], email[i], team[i], username[i], password[i], access_role[i], user_id[i]))
         conn.commit()
+        conn.close()
         from backend.core.gdrive_storage import sync_database_to_gdrive
         sync_database_to_gdrive()
+        return {"success": True}
     except Exception:
-        conn.close()
+        try: conn.close()
+        except: pass
         conn = get_db()
         cursor = conn.cursor()
         
@@ -154,9 +158,6 @@ async def bulk_update(
             "can_edit_backend": can_edit, "error": "Employee ID already exists. Updates were not saved.", 
             "current_user": user
         })
-    conn.close()
-    
-    return {"success": True}
 
 # Xóa một User
 @router.post("/admin/delete_user/{target_id}")
@@ -174,9 +175,9 @@ async def delete_user(request: Request, target_id: int):
         
     cursor.execute("DELETE FROM users WHERE id = ?", (target_id,))
     conn.commit()
+    conn.close()
     from backend.core.gdrive_storage import sync_database_to_gdrive
     sync_database_to_gdrive()
-    conn.close()
     return {"success": True}
 
 # Bật khóa sửa Admin Management

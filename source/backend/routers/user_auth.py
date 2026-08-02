@@ -36,12 +36,13 @@ async def post_register(
             (fullname, email, team, username, password, "Pending")
         )
         conn.commit()
+        conn.close()
         from backend.core.gdrive_storage import sync_database_to_gdrive
         sync_database_to_gdrive()
     except sqlite3.IntegrityError:
-        conn.close()
+        try: conn.close()
+        except: pass
         return templates.TemplateResponse(request=request, name="user_register.html", context={"error": "Employee ID already exists."})
-    conn.close()
     return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
 
 # Render trang Đăng nhập
