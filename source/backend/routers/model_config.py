@@ -156,6 +156,8 @@ async def api_save_model(request: Request):
                 target_dir = os.path.join(MP_READINESS_DATA_PATH, s_name).replace("\\", "/")
                 os.makedirs(target_dir, exist_ok=True)
         conn.commit()
+        from backend.core.gdrive_storage import sync_database_to_gdrive
+        sync_database_to_gdrive()
     except Exception as e:
         conn.close()
         return {"error": str(e)}

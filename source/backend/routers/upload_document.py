@@ -624,6 +624,14 @@ async def api_save_content(request: Request, version_id: str):
     cursor.execute("UPDATE document_versions SET content = ? WHERE id = ?", ("", version_id))
     conn.commit()
     conn.close()
+
+    try:
+        from backend.core.gdrive_storage import upload_file_to_gdrive, sync_database_to_gdrive
+        rel_path = os.path.relpath(content_path, start=".")
+        upload_file_to_gdrive(content_path, rel_path)
+        sync_database_to_gdrive()
+    except Exception as e:
+        print(f"[GDRIVE SYNC ERROR] {e}")
     
     return {"success": True}
 
@@ -684,6 +692,13 @@ async def api_upload_files(request: Request, version_id: str, files: List[Upload
         content = await file.read()
         with open(file_path, "wb") as f:
             f.write(content)
+            
+        try:
+            from backend.core.gdrive_storage import upload_file_to_gdrive
+            rel_path = os.path.relpath(file_path, start=".")
+            upload_file_to_gdrive(file_path, rel_path)
+        except Exception as e:
+            print(f"[GDRIVE SYNC ERROR] {e}")
             
         if not is_v00:
             cursor.execute("""
