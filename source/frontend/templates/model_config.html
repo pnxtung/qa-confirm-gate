@@ -181,7 +181,7 @@
                                         <option value="No" {% if model.activate == 'No' %}selected{% endif %}>No</option>
                                     </select>
                                 </td>
-                                <td class="p-0 border-r-0 text-center"><input type="radio" name="model_select" class="w-4 h-4 cursor-pointer model-radio" value="{{ model.id }}"></td>
+                                <td class="p-0 border-r-0 text-center"><input type="checkbox" class="w-4 h-4 cursor-pointer model-select-checkbox" value="{{ model.id }}"></td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -365,6 +365,17 @@
             });
             this.setAttribute('data-selected', !isSelected);
         });
+        // Single select helper for Model List
+        modelTbody.addEventListener('change', (e) => {
+            if (e.target && e.target.classList.contains('model-select-checkbox')) {
+                if (e.target.checked) {
+                    modelTbody.querySelectorAll('.model-select-checkbox').forEach(cb => {
+                        if (cb !== e.target) cb.checked = false;
+                    });
+                }
+            }
+        });
+
         // Query Button
         document.getElementById('btn-query-model')?.addEventListener('click', async () => {
             const checkedBoxes = modelTbody.querySelectorAll('.model-select-checkbox:checked');
