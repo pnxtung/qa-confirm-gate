@@ -1,5 +1,5 @@
 @echo off
-title QA Confirm Gate - Internet Public Tunnel
+title QA Confirm Gate - Cloudflare Public Tunnel
 echo ==================================================
 echo STARTING INTERNET TUNNEL VIA CLOUDFLARE
 echo Make sure Start_Server.bat is running on http://localhost:8000!

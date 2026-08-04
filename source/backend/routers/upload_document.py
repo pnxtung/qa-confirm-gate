@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Request, status, Response, UploadFile, File
+from fastapi import APIRouter, Request, Response, status, File, UploadFile, BackgroundTasks
 from fastapi.responses import RedirectResponse, JSONResponse, FileResponse
 from fastapi.templating import Jinja2Templates
+from backend.core.storage_adapter import StorageAdapter
 import sqlite3
 import os
 import shutil
@@ -571,9 +572,9 @@ async def api_approve_progress(request: Request, progress_id: int):
     conn.close()
     return {"success": True}
 
-# Ghi nội dung HTML trình soạn thảo ra ổ đĩa vật lý
+# Ghi nội dung HTML trình soạn thảo ra kho lưu trữ (StorageAdapter & BackgroundTasks)
 @router.post("/api/documents/version/{version_id}/content")
-async def api_save_content(request: Request, version_id: str):
+async def api_save_content(request: Request, version_id: str, background_tasks: BackgroundTasks):
     user = get_current_user(request)
     if not user:
         return Response(status_code=status.HTTP_403_FORBIDDEN)
@@ -594,38 +595,53 @@ async def api_save_content(request: Request, version_id: str):
         if lock_err:
             conn.close()
             return {"success": False, "error": lock_err}
-        cursor.execute("SELECT team, level_1, level_2 FROM model_checklist WHERE id = ?", (model_checklist_id,))
+        cursor.execute("""
+            SELECT m.name as model_name, mc.team, mc.level_1, mc.level_2 
+            FROM model_checklist mc 
+            LEFT JOIN models m ON mc.model_id = m.id 
+            WHERE mc.id = ?
+        """, (model_checklist_id,))
         item = cursor.fetchone()
         if not item:
             conn.close()
             return {"success": False, "error": "Template not found"}
-            
-        s_team = "".join(c if c.isalnum() else "_" for c in item['team'])
-        s_l1 = "".join(c if c.isalnum() else "_" for c in item['level_1'])
-        s_l2 = "".join(c if c.isalnum() else "_" for c in item['level_2'])
-        v_dir = os.path.join(V00_TEMPLATES_PATH, s_team, s_l1, s_l2, "V00").replace("\\", "/")
-        os.makedirs(v_dir, exist_ok=True)
+        model_name = item['model_name'] or "Template"
+        team = item['team']
+        level_1 = item['level_1']
+        level_2 = item['level_2']
+        version_no = "V00"
     else:
         version_id_int = int(version_id)
-        cursor.execute("SELECT model_checklist_id FROM document_versions WHERE id = ?", (version_id_int,))
+        cursor.execute("""
+            SELECT dv.model_checklist_id, dv.version_no, mc.team, mc.level_1, mc.level_2, m.name as model_name
+            FROM document_versions dv
+            JOIN model_checklist mc ON dv.model_checklist_id = mc.id
+            LEFT JOIN models m ON mc.model_id = m.id
+            WHERE dv.id = ?
+        """, (version_id_int,))
         row = cursor.fetchone()
-        if row:
-            lock_err = check_pessimistic_lock(cursor, row[0], user)
-            if lock_err:
-                conn.close()
-                return {"success": False, "error": lock_err}
-        v_dir = get_version_dir(version_id_int)
-        if not v_dir:
+        if not row:
             conn.close()
-            return {"success": False, "error": "Version directory not found"}
-        os.makedirs(v_dir, exist_ok=True)
+            return {"success": False, "error": "Version not found"}
+            
+        checklist_id = row['model_checklist_id']
+        lock_err = check_pessimistic_lock(cursor, checklist_id, user)
+        if lock_err:
+            conn.close()
+            return {"success": False, "error": lock_err}
+            
+        model_name = row['model_name'] or "Unknown"
+        team = row['team']
+        level_1 = row['level_1']
+        level_2 = row['level_2']
+        version_no = row['version_no']
+        
         cursor.execute("UPDATE document_versions SET uploader_username = ? WHERE id = ?", (user['username'], version_id_int))
         conn.commit()
     conn.close()
 
-    content_path = os.path.join(v_dir, "content.html")
-    with open(content_path, "w", encoding="utf-8") as f:
-        f.write(html_content)
+    # Save HTML using unified StorageAdapter with Async BackgroundTasks
+    StorageAdapter.save_document_html(model_name, team, level_1, level_2, version_no, html_content, background_tasks)
         
     conn = get_db()
     cursor = conn.cursor()
@@ -633,13 +649,8 @@ async def api_save_content(request: Request, version_id: str):
     conn.commit()
     conn.close()
 
-    try:
-        from backend.core.gdrive_storage import upload_file_to_gdrive, sync_database_to_gdrive
-        rel_path = os.path.relpath(content_path, start=".")
-        upload_file_to_gdrive(content_path, rel_path)
-        sync_database_to_gdrive()
-    except Exception as e:
-        print(f"[GDRIVE SYNC ERROR] {e}")
+    # Trigger DB sync (local / gdrive / supabase)
+    StorageAdapter.sync_database(background_tasks)
     
     return {"success": True}
 

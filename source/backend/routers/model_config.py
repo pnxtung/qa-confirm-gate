@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Form, status, Response
+from fastapi import APIRouter, Request, Form, status, Response, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 import sqlite3
@@ -10,6 +10,7 @@ from backend.core.database import (
 )
 from backend.core.security import get_current_user
 from backend.core.config import V00_TEMPLATES_PATH, MP_READINESS_DATA_PATH
+from backend.core.storage_adapter import StorageAdapter
 
 router = APIRouter()
 templates = Jinja2Templates(directory="frontend/templates")
@@ -116,7 +117,7 @@ async def get_setting(request: Request):
 
 # Thêm mới hoặc cập nhật Model
 @router.post("/api/models")
-async def api_save_model(request: Request):
+async def api_save_model(request: Request, background_tasks: BackgroundTasks):
     user = get_current_user(request)
     if not user or (user["access_role"] != "Admin" and user["team"] != "Process DEV"):
         return Response(status_code=status.HTTP_403_FORBIDDEN)
@@ -151,13 +152,11 @@ async def api_save_model(request: Request):
                   data.get("status"), data.get("activate"), data.get("sort_order") or 0))
             model_id = cursor.lastrowid
             
-            if data.get("name"):
-                s_name = sanitize_folder_name(data.get("name"))
-                target_dir = os.path.join(MP_READINESS_DATA_PATH, s_name).replace("\\", "/")
-                os.makedirs(target_dir, exist_ok=True)
         conn.commit()
-        from backend.core.gdrive_storage import sync_database_to_gdrive
-        sync_database_to_gdrive()
+        cursor.execute("SELECT name FROM models")
+        active_models = [r[0] for r in cursor.fetchall() if r[0]]
+        StorageAdapter.reconcile_model_folders(active_models, background_tasks)
+        StorageAdapter.sync_database(background_tasks)
     except Exception as e:
         conn.close()
         return {"error": str(e)}
@@ -167,7 +166,7 @@ async def api_save_model(request: Request):
 
 # Xóa một Model
 @router.delete("/api/models/{model_id}")
-async def api_delete_model(request: Request, model_id: int):
+async def api_delete_model(request: Request, model_id: int, background_tasks: BackgroundTasks):
     user = get_current_user(request)
     if not user or (user["access_role"] != "Admin" and user["team"] != "Process DEV"):
         return Response(status_code=status.HTTP_403_FORBIDDEN)
@@ -183,16 +182,13 @@ async def api_delete_model(request: Request, model_id: int):
     model_row = cursor.fetchone()
     if model_row:
         model_name = model_row[0]
-        safe_model_name = sanitize_folder_name(model_name)
-        folder_path = os.path.join(MP_READINESS_DATA_PATH, safe_model_name).replace("\\", "/")
-        shutil.rmtree(folder_path, ignore_errors=True)
+        StorageAdapter.delete_model_folder(model_name, background_tasks)
         
     cursor.execute("DELETE FROM document_versions WHERE model_checklist_id IN (SELECT id FROM model_checklist WHERE model_id=?)", (model_id,))
     cursor.execute("DELETE FROM models WHERE id=?", (model_id,))
     cursor.execute("DELETE FROM model_checklist WHERE model_id=?", (model_id,))
     conn.commit()
-    from backend.core.gdrive_storage import sync_database_to_gdrive
-    sync_database_to_gdrive()
+    StorageAdapter.sync_database(background_tasks)
     conn.close()
     return {"success": True}
 
