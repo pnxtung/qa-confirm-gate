@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA Confirm Gate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/script.js"></script>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+    <!-- Mobile Header -->
+    <header class="md:hidden bg-[#0a192f] text-white h-14 flex items-center justify-between px-4 shrink-0 shadow-md z-30">
+        <div class="flex items-center space-x-3">
+            <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="p-1.5 rounded-md hover:bg-slate-800 focus:outline-none border border-slate-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <span class="font-bold tracking-wide text-base">QA Confirm Gate</span>
+        </div>
+        <div class="text-xs font-semibold bg-slate-800 px-2.5 py-1 rounded-full text-slate-200 border border-slate-700">
+            {{ current_user.fullname if current_user else 'Guest' }}
+        </div>
+    </header>
+
+    <!-- Mobile Drawer Overlay -->
+    <div id="mobile-menu-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden transition-opacity"></div>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        <aside id="main-sidebar" class="fixed inset-y-0 left-0 z-50 w-64 border-r border-gray-400 flex flex-col shrink-0 sidebar -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
+            <div class="h-16 flex items-center px-4 border-b border-gray-400">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="text-lg font-bold tracking-wide">QA Confirm Gate</span>
+            </div>
+            <div class="flex-1 py-4 space-y-1">
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 bg-[#0a192f] text-white mx-2 rounded-md font-bold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span>Home</span>
+                </a>
+                <a href="/upload" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <span>Upload Documents</span>
+                </a>
+                <a href="/setting" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>Model Config</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    <span>Feedback</span>
+                </a>
+                {% if current_user and current_user.access_role == 'Admin' %}
+                <a href="/admin" class="flex items-center space-x-3 px-4 py-3 mx-2 text-red-600 font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <span>Admin Management</span>
+                </a>
+                {% endif %}
+            </div>
+            <div class="mt-auto border-t border-gray-400 p-4 flex items-center space-x-3 bg-white">
+                <div class="w-10 h-10 rounded-full border border-black flex items-center justify-center font-bold text-sm bg-gray-100">
+                    AD
+                </div>
+                <div class="text-sm">
+                    <p class="font-bold">{{ current_user.fullname if current_user else 'Guest' }}</p>
+                    <p class="text-gray-600 text-xs">{{ current_user.email if current_user else 'guest@domain.com' }}</p>
+                </div>
+            </div>
+            <form action="/logout" method="POST" class="m-0 border-t border-gray-400 bg-[#cbd5e1] p-3">
+                <button type="submit" class="w-full flex items-center space-x-3 font-bold text-black hover:text-gray-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </aside>
+        <main class="flex-1 overflow-y-auto p-3 lg:p-4 max-lg:pb-28 flex flex-col gap-4 bg-white scrollbar-custom min-h-[100dvh]">
+            <!-- Top Section: Model Filter (Left 60%) & Greeting/Clock (Right 40%) on PC -->
+            <div class="flex flex-col-reverse lg:flex-row gap-4 shrink-0">
+                <!-- Model Filter Box (Desktop Left 60% / Mobile Position 2) -->
+                <div class="border-box flex-[1.5] bg-white">
+                    <div class="bg-white border-b border-gray-400 p-2 shrink-0">
+                        <h3 class="section-title flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                            Model Filter
+                        </h3>
+                    </div>
+                    <div class="bg-white p-3 overflow-x-auto touch-scroll">
+                        <div class="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 text-xs">
+                            <div class="flex items-center gap-2 flex-1 min-w-0">
+                                <div class="flex items-center gap-1 shrink-0 font-bold">
+                                    <div class="w-1.5 h-1.5 bg-black rounded-sm"></div> Search Name
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <input type="text" id="modelInput" class="form-input text-center text-xs py-1 min-h-[28px] w-full" placeholder="Nhập tên Model">
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 flex-1 min-w-0">
+                                <div class="flex items-center gap-1 shrink-0 font-bold">
+                                    <div class="w-1.5 h-1.5 bg-black rounded-sm"></div> Select Model
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <select id="modelSelect" class="form-input text-center text-xs py-1 cursor-pointer font-medium min-h-[28px] w-full">
+                                        <option value="">Chọn trong Combo box</option>
+                                        {% for model in models %}
+                                            <option value="{{ model.id }}">{{ model.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <button id="btn-query-home" class="btn-primary px-4 py-1 shrink-0 font-bold min-h-[28px] max-lg:w-full">Query</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Greeting & Realtime Clock Box (Desktop Right 40% / Mobile Position 1 Top) -->
+                <div class="border-box flex-1 bg-white">
+                    <div class="bg-white border-b border-gray-400 p-2 shrink-0">
+                        <h3 class="section-title flex items-center gap-2">
+                            <svg class="w-4 h-4 text-gray-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span>Xin chào {{ current_user.fullname if current_user else 'Guest' }}, <span id="dynamic-greeting"></span></span>
+                        </h3>
+                    </div>
+                    <div class="bg-white flex-1 flex items-center justify-center p-3">
+                        <span id="realtime-clock" class="text-base md:text-xl font-medium tracking-wide text-gray-800 text-center">--:--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Section: Documents Checklist (Left) & Stats/Chart (Right) on PC -->
+            <div class="flex flex-col-reverse lg:flex-row gap-4 flex-1 shrink-0 lg:min-h-0">
+                <!-- Documents Checklist (Desktop Left Col / Mobile Position 5) -->
+                <div class="flex-[1.5] border-box max-lg:h-auto lg:h-full min-h-[300px] lg:min-h-0">
+                    <div class="flex items-center gap-2 px-3 py-2 border-b border-gray-400 bg-white z-10 shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        <h3 class="section-title">Documents Checklist</h3>
+                    </div>
+                    <div class="overflow-auto touch-scroll flex-1 relative bg-white">
+                        <table class="resizable">
+                            <thead>
+                                <tr>
+                                    <th class="sticky-header py-1 px-2 min-w-[80px] border-t-0 border-l-0">Team</th>
+                                    <th class="sticky-header py-1 px-2 min-w-[120px] border-t-0">Level 1</th>
+                                    <th class="sticky-header py-1 px-2 min-w-[150px] border-t-0">Level 2</th>
+                                    <th class="sticky-header py-1 px-2 min-w-[80px] border-t-0">Main PIC</th>
+                                    <th class="sticky-header py-1 px-2 min-w-[80px] border-t-0">Document</th>
+                                    <th class="sticky-header py-1 px-2 min-w-[100px] border-t-0">QA Confirmed</th>
+                                    <th class="sticky-header py-1 px-2 min-w-[150px] border-t-0 border-r-0">Remark</th>
+                                </tr>
+                            </thead>
+                            <tbody id="home-document-checklist-body">
+                                <tr><td colspan="7" class="p-4 text-center text-gray-500">Vui lòng chọn Model và bấm Query</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Stats & Chart Container (Desktop Right Col / Mobile Positions 3 & 4) -->
+                <div class="flex-1 flex flex-col gap-4 max-lg:h-auto lg:h-full">
+                    <!-- 3 Stats Cards (Mobile Position 3 / Desktop Right Top) -->
+                    <div class="flex flex-row gap-2 shrink-0">
+                        <div class="flex-1 border-2 border-[#0a192f] rounded-xl p-3 text-center bg-white shadow-sm flex flex-col justify-center">
+                            <p class="text-xs font-bold mb-2 text-left">Total status</p>
+                            <p id="stat-total-status" class="text-3xl font-bold text-[#0a192f]">0.0%</p>
+                        </div>
+                        <div class="flex-1 border-2 border-[#0a192f] rounded-xl p-3 text-center bg-white shadow-sm flex flex-col justify-center">
+                            <p class="text-xs font-bold mb-2 text-left">Documents</p>
+                            <p id="stat-documents" class="text-3xl font-bold text-[#0a192f]">0/0</p>
+                        </div>
+                        <div class="flex-1 border-2 border-[#0a192f] rounded-xl p-3 text-center bg-white shadow-sm flex flex-col justify-center">
+                            <p class="text-xs font-bold mb-2 text-left">QA Confirmed</p>
+                            <p id="stat-qa-confirmed" class="text-3xl font-bold text-[#0a192f]">0/0</p>
+                        </div>
+                    </div>
+
+                    <!-- % Pending Items Chart (Mobile Position 4 / Desktop Right Bottom) -->
+                    <div class="border-box flex-1 w-full max-lg:h-[100px] max-lg:min-h-[100px] lg:min-h-[220px]">
+                        <div class="bg-[#0a192f] text-white px-3 py-1.5 text-center shrink-0">
+                            <h3 class="section-title tracking-wide">% Pending Items by Team</h3>
+                        </div>
+                        <div id="chart-pending-teams" class="text-[11px] font-medium w-full flex-1 flex flex-col justify-between py-1 px-2 overflow-y-auto no-scrollbar">
+                            <!-- Dynamic chart rows -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row: Active Models (Mobile Position 6 / Desktop Bottom) -->
+            <div class="border-box mt-auto h-[180px] shrink-0 mb-4 lg:mb-0 min-h-[180px]">
+                <div class="flex items-center gap-2 px-3 py-2 border-b border-gray-400 bg-white z-10 shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                    <h3 class="section-title">Active Models</h3>
+                </div>
+                <div class="overflow-auto touch-scroll flex-1 relative bg-white">
+                    <table class="text-center resizable">
+                        <thead>
+                            <tr>
+                                <th class="sticky-header py-1 px-2 min-w-[150px] border-t-0 border-l-0">Model Name</th>
+                                <th class="sticky-header py-1 px-2 min-w-[120px] border-t-0">Model Type</th>
+                                <th class="sticky-header py-1 px-2 min-w-[100px] border-t-0">Customer</th>
+                                <th class="sticky-header py-1 px-2 min-w-[100px] border-t-0">Line</th>
+                                <th class="sticky-header py-1 px-2 min-w-[120px] border-t-0">MP1st Date</th>
+                                <th class="sticky-header py-1 px-2 min-w-[80px] border-t-0">MP1st Qty</th>
+                                <th class="sticky-header py-1 px-2 min-w-[120px] border-t-0">Ship1st Date</th>
+                                <th class="sticky-header py-1 px-2 min-w-[80px] border-t-0">Ship1st Qty</th>
+                                <th class="sticky-header py-1 px-2 min-w-[80px] border-t-0 border-r-0">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if active_models %}
+                                {% for model in active_models %}
+                                <tr class="hover:bg-gray-100 cursor-pointer active-model-row" data-id="{{ model.id }}">
+                                    <td class="py-1 px-2 font-medium border-l-0">{{ model.name }}</td>
+                                    <td class="py-1 px-2 border-l-0">{{ model.model_type or '' }}</td>
+                                    <td class="py-1 px-2 border-l-0">{{ model.customer or '' }}</td>
+                                    <td class="py-1 px-2 border-l-0">{{ model.line or '' }}</td>
+                                    <td class="py-1 px-2 border-l-0">{{ model.mp1st_date or '' }}</td>
+                                    <td class="py-1 px-2 border-l-0">{{ model.mp1st_qty or '' }}</td>
+                                    <td class="py-1 px-2 border-l-0">{{ model.ship1st_date or '' }}</td>
+                                    <td class="py-1 px-2 border-l-0">{{ model.ship1st_qty or '' }}</td>
+                                    <td class="py-1 px-2 border-r-0 text-blue-700 font-bold">{{ model.status_percent }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="8" class="p-4 text-center text-gray-500">No active models found</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        const savingRemarkItems = new Set();
+        async function saveRemark(itemId, el) {
+            const newRemark = el.value.trim();
+            const originalRemark = (el.getAttribute('data-original-value') || '').trim();
+            
+            // 1. Value Change Check: If text hasn't changed at all, ZERO API requests!
+            if (newRemark === originalRemark) {
+                return;
+            }
+
+            // 2. In-Flight Lock Guard: If already saving this item, don't fire overlapping requests
+            if (savingRemarkItems.has(itemId)) {
+                return;
+            }
+
+            savingRemarkItems.add(itemId);
+            const currentUpdatedAt = el.getAttribute('data-updated-at');
+            try {
+                const res = await fetch(`/api/model_checklist/${itemId}/remark`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({remark: newRemark, updated_at: currentUpdatedAt})
+                });
+                const data = await res.json();
+                if (!data.success) {
+                    // Silent refresh timestamp without intrusive alert modal
+                    el.style.backgroundColor = '#fee2e2';
+                    setTimeout(() => el.style.backgroundColor = '', 2000);
+                    const btnQuery = document.getElementById('btn-query-home');
+                    if (btnQuery) {
+                        btnQuery.click();
+                    }
+                    return;
+                }
+                if (data.updated_at) {
+                    el.setAttribute('data-updated-at', data.updated_at);
+                    el.setAttribute('data-original-value', newRemark);
+                    el.style.backgroundColor = '';
+                }
+            } catch (err) {
+                console.error(err);
+                el.style.backgroundColor = '#fee2e2';
+                setTimeout(() => el.style.backgroundColor = '', 2000);
+            } finally {
+                savingRemarkItems.delete(itemId);
+            }
+        }
+        function updateRealtimeClock() {
+            const now = new Date();
+            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            const dayName = days[now.getDay()];
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const timeString = `${dayName} , ${day}-${month}-${year} , ${hours}:${minutes}:${seconds}`;
+            const clockEl = document.getElementById('realtime-clock');
+            if(clockEl) clockEl.textContent = timeString;
+            
+            const greetingEl = document.getElementById('dynamic-greeting');
+            if(greetingEl) greetingEl.textContent = getGreeting(now.getHours());
+        }
+        
+        const greetings = {
+            1: [
+                "Bạn đã vất vả rồi, hãy nghỉ ngơi sớm đi nhé!",
+                "Bạn còn chưa ngủ sao?",
+                "Chú ý giữ gìn sức khoẻ nhé",
+                "Đừng thức khuya quá nhé!",
+                "Đừng cố sức quá, tôi lo cho bạn nhiều lắm!"
+            ],
+            2: [
+                "Chúc bạn ngày mới tốt lành!",
+                "Chúc bạn ngày làm việc thật hiệu quả!",
+                "Ngày mới nhiều năng lượng nhé!",
+                "Bạn đã ăn sáng chưa?",
+                "Bắt đầu ngày mới với nụ cười thật tươi nào ^^"
+            ],
+            3: [
+                "Tập trung cao độ nào!",
+                "Cố lên nhé! Bạn đang làm rất tốt…",
+                "Hôm nay chúng ta có thể hoàn thành mục tiêu không?",
+                "Có gì khó khăn, hãy chia sẻ cùng nhau nhé!",
+                "Nghỉ tay chút, rồi tiếp tục chiến đấu nào!"
+            ],
+            4: [
+                "Hôm nay mấy giờ bạn về?",
+                "Hôm nay bạn có mệt không?",
+                "Cố lên! Một chút nữa là xong rồi.",
+                "Cảm ơn sự nỗ lực của bạn!",
+                "Nhớ dành thời gian cho gia đình nữa nhé!"
+            ]
+        };
+        
+        let currentGreetingHour = -1;
+        let currentGreetingText = "";
+
+        function getGreeting(hours) {
+            if (hours !== currentGreetingHour) {
+                currentGreetingHour = hours;
+                let group = 1;
+                if (hours >= 4 && hours < 10) group = 2;
+                else if (hours >= 10 && hours < 18) group = 3;
+                else if (hours >= 18 && hours < 22) group = 4;
+                
+                const list = greetings[group];
+                currentGreetingText = list[Math.floor(Math.random() * list.length)];
+            }
+            return currentGreetingText;
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            updateRealtimeClock();
+            setInterval(updateRealtimeClock, 1000);
+            const modelInput = document.getElementById('modelInput');
+            const modelSelect = document.getElementById('modelSelect');
+            if (modelInput && modelSelect) {
+                const allOptions = Array.from(modelSelect.options);
+                modelInput.addEventListener('input', function() {
+                    const filterText = this.value.toLowerCase().trim();
+                    modelSelect.innerHTML = '';
+                    allOptions.forEach(option => {
+                        if (option.value === "" || option.text.toLowerCase().includes(filterText)) {
+                            modelSelect.appendChild(option.cloneNode(true));
+                        }
+                    });
+                });
+            }
+            document.getElementById('btn-query-home')?.addEventListener('click', async function() {
+                const modelId = document.getElementById('modelSelect').value;
+                if (!modelId) {
+                    alert('Vui lòng chọn 1 Model trong danh sách Model Filter.');
+                    return;
+                }
+                sessionStorage.setItem('selectedHomeModelId', modelId);
+                try {
+                    const res = await fetch('/api/model_checklist/' + modelId);
+                    const items = await res.json();
+                    const tbody = document.getElementById('home-document-checklist-body');
+                    tbody.innerHTML = '';
+                    
+                    // Cập nhật 3 ô thống kê
+                    const totalItems = items.length;
+                    const doneItems = items.filter(i => i.doc_status === 'Done').length;
+                    const approvedItems = items.filter(i => i.qa_status === 'Approved').length;
+                    const percent = totalItems > 0 ? (approvedItems / totalItems * 100).toFixed(1) : "0.0";
+                    
+                    document.getElementById('stat-documents').textContent = `${doneItems}/${totalItems}`;
+                    document.getElementById('stat-qa-confirmed').textContent = `${approvedItems}/${totalItems}`;
+                    document.getElementById('stat-total-status').textContent = `${percent}%`;
+
+                    // Cập nhật biểu đồ % Pending Items by Team
+                    const teamPending = {};
+                    const teamTotalObj = {};
+                    const teamOrder = {};
+                    let orderIdx = 0;
+                    
+                    items.forEach(item => {
+                        const t = item.team;
+                        if (!(t in teamOrder)) {
+                            teamOrder[t] = orderIdx++;
+                        }
+                        teamTotalObj[t] = (teamTotalObj[t] || 0) + 1;
+                        if (item.qa_status !== 'Approved') {
+                            teamPending[t] = (teamPending[t] || 0) + 1;
+                        } else {
+                            teamPending[t] = teamPending[t] || 0;
+                        }
+                    });
+                    
+                    const chartContainer = document.getElementById('chart-pending-teams');
+                    chartContainer.innerHTML = '';
+                    
+                    const sortedTeams = Object.keys(teamTotalObj).sort((a, b) => {
+                        const pctA = (teamPending[a] / teamTotalObj[a]) * 100;
+                        const pctB = (teamPending[b] / teamTotalObj[b]) * 100;
+                        
+                        // 1. Sort by percentage descending
+                        if (Math.abs(pctB - pctA) > 0.001) {
+                            return pctB - pctA;
+                        }
+                        
+                        // 2. Sort by default DB order (appearance in items array)
+                        return teamOrder[a] - teamOrder[b];
+                    });
+                    
+                    sortedTeams.forEach(team => {
+                        const pCount = teamPending[team];
+                        const tCount = teamTotalObj[team];
+                        const pct = ((pCount / tCount) * 100).toFixed(1);
+                        
+                        const row = document.createElement('div');
+                        row.className = "flex items-center w-full flex-1 min-h-[16px]";
+                        row.innerHTML = `
+                            <div class="w-20 text-right pr-2 shrink-0">${team}</div>
+                            <div class="flex-1 flex items-center h-[60%] w-full">
+                                <div class="bg-[#d97706] h-full" style="width: ${pct}%;"></div>
+                                <span class="ml-2">${pct}%</span>
+                            </div>
+                        `;
+                        chartContainer.appendChild(row);
+                    });
+
+                    if (items.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Chưa có hạng mục nào được add cho Model này.</td></tr>';
+                        return;
+                    }
+                    const teamCounts = {};
+                    const teamLevel1Counts = {};
+                    items.forEach(item => {
+                        teamCounts[item.team] = (teamCounts[item.team] || 0) + 1;
+                        const key1 = item.team + '|' + item.level_1;
+                        teamLevel1Counts[key1] = (teamLevel1Counts[key1] || 0) + 1;
+                    });
+                    const renderedTeams = new Set();
+                    const renderedLevel1s = new Set();
+                    items.forEach(item => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'hover:bg-gray-50';
+                        let teamHtml = '';
+                        if (!renderedTeams.has(item.team)) {
+                            teamHtml = `<td class="text-center align-middle border-l-0 font-bold" rowspan="${teamCounts[item.team]}">${item.team}</td>`;
+                            renderedTeams.add(item.team);
+                        }
+                        const key1 = item.team + '|' + item.level_1;
+                        let level1Html = '';
+                        if (!renderedLevel1s.has(key1)) {
+                            level1Html = `<td class="align-middle border" rowspan="${teamLevel1Counts[key1]}">${item.level_1}</td>`;
+                            renderedLevel1s.add(key1);
+                        }
+                        let textColorClass = 'text-black';
+                        if (item.role === 'Uploader') {
+                            textColorClass = 'text-blue-600 font-bold';
+                        } else if (item.role === 'Approver') {
+                            textColorClass = 'text-green-600 font-bold';
+                        }
+                        
+                        let docStatusHtml = '<span class="font-bold text-[#d97706]">Pending</span>';
+                        if (item.doc_status === 'Done') {
+                            docStatusHtml = '<span class="font-bold text-green-600">Done</span>';
+                        }
+                        
+                        let qaStatusHtml = '<span class="font-bold text-[#d97706]">Pending</span>';
+                        if (item.qa_status === 'Approved') {
+                            qaStatusHtml = '<span class="font-bold text-green-600">Approved</span>';
+                        } else if (item.qa_status === 'Rejected') {
+                            qaStatusHtml = '<span class="font-bold text-red-500">Rejected</span>';
+                        }
+
+                        let remarkHtml = '';
+                        if (item.can_remark) {
+                            remarkHtml = `<textarea data-original-value="${item.remark || ''}" data-updated-at="${item.updated_at || ''}" class="excel-input text-left text-inherit resize-none overflow-hidden block leading-tight" rows="1" onfocus="this.setAttribute('data-original-value', this.value)" onblur="saveRemark(${item.id}, this)" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'">${item.remark || ''}</textarea>`;
+                        } else {
+                            remarkHtml = `<div class="excel-input text-left text-inherit whitespace-pre-wrap leading-tight">${item.remark || ''}</div>`;
+                        }
+
+                        tr.innerHTML = `
+                            ${teamHtml}
+                            ${level1Html}
+                            <td class="border cursor-pointer hover:bg-gray-200 ${textColorClass}" onclick="window.location.href='/upload/${item.id}'">${item.level_2}</td>
+                            <td class="text-center border font-semibold text-gray-700">${item.main_pic || ''}</td>
+                            <td class="text-center border">${docStatusHtml}</td>
+                            <td class="text-center border">${qaStatusHtml}</td>
+                            <td class="p-0 border-r-0 align-top">${remarkHtml}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } catch (e) {
+                    console.error(e);
+                    alert('Co loi xay ra khi lay du lieu Checklist.');
+                }
+            });
+            // Auto-load logic for Home page
+            const btnQuery = document.getElementById('btn-query-home');
+            if (modelSelect && btnQuery) {
+                const storedModelId = sessionStorage.getItem('selectedHomeModelId');
+                if (storedModelId) {
+                    modelSelect.value = storedModelId;
+                    if (modelSelect.value) btnQuery.click();
+                } else {
+                    const firstActiveModelId = "{{ active_models[0].id if active_models else '' }}";
+                    if (firstActiveModelId) {
+                        modelSelect.value = firstActiveModelId;
+                        btnQuery.click();
+                    }
+                }
+            }
+            // Click on active model row
+            document.querySelectorAll('.active-model-row').forEach(row => {
+                row.addEventListener('click', function() {
+                    const modelId = this.getAttribute('data-id');
+                    if (modelSelect && btnQuery && modelId) {
+                        modelSelect.value = modelId;
+                        btnQuery.click();
+                    }
+                });
+            });
+        });
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('main-sidebar');
+            const overlay = document.getElementById('mobile-menu-overlay');
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
