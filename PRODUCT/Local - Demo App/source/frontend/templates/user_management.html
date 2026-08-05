@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - QA Confirm Gate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if can_edit_backend %}
+            const isMyLock = {{ 'true' if locked_by == current_user.fullname else 'false' }};
+            const btnStartEdit = document.getElementById('btn-start-edit');
+            const btnEndEdit = document.getElementById('btn-end-edit');
+            
+            if (!isMyLock) {
+                // Read-only mode
+                document.querySelectorAll('#team-form input, #team-form select, #team-form button, #user-form input, #user-form select, #user-form button').forEach(el => {
+                    el.disabled = true;
+                    el.classList.add('opacity-50', 'cursor-not-allowed');
+                });
+            } else {
+                // Active editing mode, setup timer
+                window.timeLeft = 600 - ({{ server_time }} - {{ locked_at }});
+                if (window.timeLeft < 0) window.timeLeft = 0;
+                
+                const updateDisplay = () => {
+                    if (window.timeLeft <= 0) {
+                        document.getElementById('config-timer-display').innerText = "Time Out!";
+                    } else {
+                        const mm = String(Math.floor(window.timeLeft / 60)).padStart(2, '0');
+                        const ss = String(window.timeLeft % 60).padStart(2, '0');
+                        document.getElementById('config-timer-display').innerText = mm + ":" + ss;
+                    }
+                };
+                updateDisplay();
+                const timerInterval = setInterval(() => {
+                    window.timeLeft--;
+                    updateDisplay();
+                    if (window.timeLeft <= 0) clearInterval(timerInterval);
+                }, 1000);
+                
+                window.addEventListener('beforeunload', function (e) {
+                    if (window.isIntentionalReload) return;
+                    navigator.sendBeacon('/api/admin/unlock');
+                });
+            }
+
+            if (btnStartEdit) {
+                btnStartEdit.addEventListener('click', async () => {
+                    const res = await fetch('/api/admin/lock', { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.error);
+                        location.reload();
+                    }
+                });
+            }
+            if (btnEndEdit) {
+                btnEndEdit.addEventListener('click', async () => {
+                    const res = await fetch('/api/admin/unlock', { method: 'POST' });
+                    location.reload();
+                });
+            }
+            {% endif %}
+
+            // Intercept forms to handle JSON response (Khóa hết hạn)
+            const handleFormSubmit = async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const formData = new FormData(form);
+                try {
+                    const res = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await res.json();
+                    if (data && !data.success) {
+                        alert(data.error);
+                        if (data.error.includes("hết hạn") || data.error.includes("đang chỉnh sửa")) {
+                            window.location.reload();
+                        }
+                    } else if (data && data.success) {
+                        alert("Lưu dữ liệu thành công!");
+                        window.isIntentionalReload = true;
+                        window.location.reload();
+                    }
+                } catch(err) {
+                    console.error("Save error:", err);
+                    window.isIntentionalReload = true;
+                    window.location.reload();
+                }
+            };
+            
+            const teamForm = document.getElementById('team-form');
+            const userForm = document.getElementById('user-form');
+            if (teamForm) teamForm.addEventListener('submit', handleFormSubmit);
+            if (userForm) userForm.addEventListener('submit', handleFormSubmit);
+
+            // Existing resizer logic below...
+
+            const tables = document.querySelectorAll('table.resizable');
+            tables.forEach(table => {
+                const cols = table.querySelectorAll('th');
+                cols.forEach(col => {
+                    const resizer = document.createElement('div');
+                    resizer.classList.add('resizer');
+                    col.appendChild(resizer);
+                    let x = 0; let w = 0;
+                    const mouseDownHandler = function(e) {
+                        x = e.clientX;
+                        const styles = window.getComputedStyle(col);
+                        w = parseInt(styles.width, 10);
+                        document.addEventListener('mousemove', mouseMoveHandler);
+                        document.addEventListener('mouseup', mouseUpHandler);
+                    };
+                    const mouseMoveHandler = function(e) {
+                        const dx = e.clientX - x;
+                        col.style.width = `${w + dx}px`;
+                        col.style.minWidth = `${w + dx}px`;
+                    };
+                    const mouseUpHandler = function() {
+                        document.removeEventListener('mousemove', mouseMoveHandler);
+                        document.removeEventListener('mouseup', mouseUpHandler);
+                    };
+                    resizer.addEventListener('mousedown', mouseDownHandler);
+                    // Double click to auto-fit
+                    resizer.addEventListener('dblclick', function(e) {
+                        e.stopPropagation();
+                        // Temporarily let browser determine natural width
+                        table.classList.remove('w-full');
+                        col.style.minWidth = '0px';
+                        col.style.width = 'auto';
+                        // Measure natural width
+                        const naturalWidth = col.getBoundingClientRect().width;
+                        // Restore and apply new width
+                        table.classList.add('w-full');
+                        col.style.minWidth = naturalWidth + 'px';
+                        col.style.width = naturalWidth + 'px';
+                    });
+                });
+            });
+        });
+        async function deleteSelectedUsers() {
+            const tbody = document.getElementById('user-table-body');
+            const checkedBoxes = tbody.querySelectorAll('.user-select-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                alert('Vui lòng tích chọn ít nhất 1 người dùng để xóa.');
+                return;
+            }
+            if (!confirm(`Bạn có chắc chắn muốn xóa ${checkedBoxes.length} người dùng đã chọn?`)) return;
+            for (const chk of checkedBoxes) {
+                const tr = chk.closest('tr');
+                const idInput = tr.querySelector('input[name="user_id"]');
+                const userId = parseInt(idInput.value);
+                if (userId === 0) {
+                    tr.remove();
+                } else {
+                    try {
+                        const res = await fetch(`/admin/delete_user/${userId}`, { method: 'POST' });
+                        if (res.ok) {
+                            tr.remove();
+                        } else {
+                            console.error('Failed to delete user ID:', userId);
+                        }
+                    } catch (err) {
+                        console.error('Error deleting user:', err);
+                    }
+                }
+            }
+        }
+        function addUserRow() {
+            const tbody = document.getElementById('user-table-body');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-0 border-l-0">
+                    <input type="hidden" name="user_id" value="0">
+                    <input type="text" name="fullname" value="" class="excel-input" required>
+                </td>
+                <td class="p-0">
+                    <input type="email" name="email" value="" class="excel-input" required>
+                </td>
+                <td class="p-0">
+                    <select name="team" class="excel-input">
+                        <option value="App Insp">App Insp</option>
+                        <option value="CS">CS</option>
+                        <option value="DQA">DQA</option>
+                        <option value="Final Insp">Final Insp</option>
+                        <option value="Integrated">Integrated</option>
+                        <option value="OQA">OQA</option>
+                        <option value="Planning">Planning</option>
+                        <option value="Process DEV">Process DEV</option>
+                        <option value="Production">Production</option>
+                        <option value="RnD">RnD</option>
+                        <option value="SQA">SQA</option>
+                        <option value="Tech 1">Tech 1</option>
+                        <option value="Tech 2">Tech 2</option>
+                    </select>
+                </td>
+                <td class="p-0">
+                    <input type="text" name="username" value="" class="excel-input" required>
+                </td>
+                <td class="p-0">
+                    <input type="text" name="password" value="" class="excel-input" required>
+                </td>
+                <td class="p-0">
+                    <select name="access_role" class="excel-input">
+                        <option value="Pending">Pending</option>
+                        <option value="Viewer">Viewer</option>
+                        <option value="OQA">OQA</option>
+                        <option value="Main PIC">Main PIC</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </td>
+                <td class="p-0 border-r-0 text-center">
+                    <input type="checkbox" class="w-4 h-4 cursor-pointer user-select-checkbox">
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+        function addTeamRow() {
+            const tbody = document.getElementById('team-table-body');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-0 border-l-0"><input type="text" name="team_name" class="excel-input" value=""></td>
+                <td class="p-0">
+                    <select name="team_active" class="excel-input text-center">
+                        <option value="Yes" selected>Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </td>
+                <td class="p-0 border-r-0 text-center"><input type="checkbox" class="w-4 h-4 cursor-pointer team-select-checkbox"></td>
+            `;
+            tbody.appendChild(tr);
+        }
+        function removeTeamRow() {
+            const tbody = document.getElementById('team-table-body');
+            const checkedBoxes = tbody.querySelectorAll('.team-select-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                alert('Vui lòng tích chọn ít nhất 1 Team để xóa.');
+                return;
+            }
+            if (confirm(`Bạn có chắc chắn muốn xóa ${checkedBoxes.length} Team đã chọn?`)) {
+                checkedBoxes.forEach(chk => chk.closest('tr').remove());
+            }
+        }
+        function moveTeamUp() {
+            const tbody = document.getElementById('team-table-body');
+            const checkedBoxes = Array.from(tbody.querySelectorAll('.team-select-checkbox:checked'));
+            if (checkedBoxes.length === 0) return;
+            checkedBoxes.forEach(chk => {
+                const tr = chk.closest('tr');
+                if (tr.previousElementSibling) {
+                    tbody.insertBefore(tr, tr.previousElementSibling);
+                }
+            });
+        }
+        function moveTeamDown() {
+            const tbody = document.getElementById('team-table-body');
+            const checkedBoxes = Array.from(tbody.querySelectorAll('.team-select-checkbox:checked')).reverse();
+            if (checkedBoxes.length === 0) return;
+            checkedBoxes.forEach(chk => {
+                const tr = chk.closest('tr');
+                if (tr.nextElementSibling) {
+                    tbody.insertBefore(tr.nextElementSibling, tr);
+                }
+            });
+        }
+    </script>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+    <!-- Mobile Header -->
+    <header class="md:hidden bg-[#0a192f] text-white h-14 flex items-center justify-between px-4 shrink-0 shadow-md z-30">
+        <div class="flex items-center space-x-3">
+            <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="p-1.5 rounded-md hover:bg-slate-800 focus:outline-none border border-slate-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <span class="font-bold tracking-wide text-base">QA Confirm Gate</span>
+        </div>
+        <div class="text-xs font-semibold bg-slate-800 px-2.5 py-1 rounded-full text-slate-200 border border-slate-700">
+            {{ current_user.fullname if current_user else 'Guest' }}
+        </div>
+    </header>
+
+    <!-- Mobile Drawer Overlay -->
+    <div id="mobile-menu-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden transition-opacity"></div>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        <aside id="main-sidebar" class="fixed inset-y-0 left-0 z-50 w-64 border-r border-gray-400 flex flex-col shrink-0 sidebar -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
+            <div class="h-16 flex items-center px-4 border-b border-gray-400">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="text-lg font-bold tracking-wide">QA Confirm Gate</span>
+            </div>
+            <div class="flex-1 py-4 space-y-1">
+                <a href="/" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span>Home</span>
+                </a>
+                <a href="/upload" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <span>Upload Documents</span>
+                </a>
+                <a href="/setting" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>Model Config</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    <span>Feedback</span>
+                </a>
+                {% if current_user and current_user.access_role == 'Admin' %}
+                <a href="/admin" class="flex items-center space-x-3 px-4 py-3 bg-[#0a192f] text-white mx-2 rounded-md font-bold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <span>Admin Management</span>
+                </a>
+                {% endif %}
+            </div>
+            <div class="mt-auto border-t border-gray-400 p-4 flex items-center space-x-3 bg-white">
+                <div class="w-10 h-10 rounded-full border border-black flex items-center justify-center font-bold text-sm bg-gray-100">
+                    AD
+                </div>
+                <div class="text-sm">
+                    <p class="font-bold">{{ current_user.fullname if current_user else 'Guest' }}</p>
+                    <p class="text-gray-600 text-xs">{{ current_user.email if current_user else 'guest@domain.com' }}</p>
+                </div>
+            </div>
+            <form action="/logout" method="POST" class="m-0 border-t border-gray-400 bg-[#cbd5e1] p-3">
+                <button type="submit" class="w-full flex items-center space-x-3 font-bold text-black hover:text-gray-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </aside>
+        <main class="flex-1 overflow-y-auto p-4 pb-36 flex flex-col gap-4 bg-[#f1f5f9] scrollbar-custom min-h-0">
+            <div class="flex items-center justify-between gap-2 max-lg:gap-1 mb-0 shrink-0 overflow-x-auto whitespace-nowrap no-scrollbar">
+                <div class="flex items-center space-x-2 shrink-0">
+                    <svg class="w-6 h-6 max-lg:w-5 max-lg:h-5 text-gray-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <span class="text-xl max-lg:text-base font-bold tracking-wide shrink-0">Admin Management</span>
+                </div>
+                {% set is_my_lock = locked_by == current_user.fullname %}
+                {% if can_edit_backend %}
+                <div class="flex items-center gap-2 max-lg:gap-1 shrink-0">
+                    <div id="editing-time-container" class="{% if not is_my_lock %}hidden{% endif %} text-red-600 font-bold text-xs flex items-center gap-1 shrink-0">
+                        Editing Time: <span id="config-timer-display">10:00</span>
+                    </div>
+                    <button id="btn-start-edit" class="btn-primary shrink-0 {% if is_my_lock %}opacity-50 cursor-not-allowed{% endif %}" {% if is_my_lock %}disabled{% endif %}>Start Edit</button>
+                    <button id="btn-end-edit" class="btn-primary !bg-red-600 shrink-0 {% if not is_my_lock %}opacity-50 cursor-not-allowed{% endif %}" {% if not is_my_lock %}disabled{% endif %}>End Edit</button>
+                </div>
+                {% endif %}
+            </div>
+        {% if message %}
+        <div class="bg-green-100 text-green-700 border border-green-300 rounded-md p-3 mb-4 text-sm font-bold shrink-0">
+            {{ message }}
+        </div>
+        {% endif %}
+        {% if error %}
+        <div class="bg-red-100 text-red-600 border border-red-300 rounded-md p-3 mb-4 text-sm font-bold shrink-0">
+            {{ error }}
+        </div>
+        {% endif %}
+        <div class="flex max-lg:flex-col shrink-0 gap-6 max-lg:gap-4 w-full relative">
+            <form id="team-form" action="/admin/bulk_update_teams" method="POST" class="flex flex-col border-box max-lg:w-full w-[30%] max-lg:h-[300px] lg:h-full min-h-0 shrink-0">
+                <div class="flex items-center justify-between px-4 py-3 border-b border-gray-400 bg-white z-10 shrink-0">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <h3 class="section-title">Teams List</h3>
+                    </div>
+                </div>
+                <div class="overflow-auto flex-1 relative bg-white min-h-0">
+                    <table class="resizable">
+                        <thead>
+                            <tr>
+                                <th class="sticky-header py-1 px-2 min-w-[120px] border-t-0 border-l-0">Team</th>
+                                <th class="sticky-header py-1 px-2 min-w-[80px] border-t-0">Active</th>
+                                <th class="sticky-header py-1 px-2 min-w-[60px] text-center border-t-0 border-r-0">Select</th>
+                            </tr>
+                        </thead>
+                        <tbody id="team-table-body">
+                            {% for team in teams %}
+                            <tr>
+                                <td class="p-0 border-l-0"><input type="text" name="team_name" class="excel-input" value="{{ team.name }}"></td>
+                                <td class="p-0">
+                                    <select name="team_active" class="excel-input text-center">
+                                        <option value="Yes" {% if team.active == 'Yes' %}selected{% endif %}>Yes</option>
+                                        <option value="No" {% if team.active == 'No' %}selected{% endif %}>No</option>
+                                    </select>
+                                </td>
+                                <td class="p-0 border-r-0 text-center"><input type="checkbox" class="w-4 h-4 cursor-pointer team-select-checkbox"></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-3 border-t border-gray-400 shrink-0 flex items-center gap-2 max-lg:gap-1 overflow-x-auto whitespace-nowrap no-scrollbar bg-white z-10">
+                    <button type="button" onclick="addTeamRow()" class="btn-primary shrink-0">+ Add Team</button>
+                    <button type="button" onclick="removeTeamRow()" class="btn-primary shrink-0">- Remove Team</button>
+                    <button type="button" onclick="moveTeamUp()" class="btn-primary shrink-0 flex items-center justify-center p-2" title="Move Up"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
+                    <button type="button" onclick="moveTeamDown()" class="btn-primary shrink-0 flex items-center justify-center p-2" title="Move Down"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                    <button type="submit" class="btn-primary shrink-0 ml-auto">Save Team</button>
+                </div>
+            </form>
+            <form id="user-form" action="/admin/bulk_update" method="POST" class="flex flex-col border-box max-lg:w-full w-[70%] max-lg:h-[500px] lg:h-full min-h-0 shrink-0">
+                <div class="border-box flex-1 min-h-0 flex flex-col">
+                <div class="flex items-center justify-between px-4 py-3 border-b border-gray-400 bg-white z-10 shrink-0">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        <h3 class="section-title">Users List</h3>
+                    </div>
+                </div>
+                <div class="overflow-auto flex-1 relative bg-white">
+                    <table class="resizable">
+                        <thead>
+                            <tr>
+                                <th class="sticky-header py-1 px-2 min-w-[150px] border-t-0 border-l-0">Full Name</th>
+                                <th class="sticky-header py-1 px-2 min-w-[200px] border-t-0">Email</th>
+                                <th class="sticky-header py-1 px-2 min-w-[120px] border-t-0">Team</th>
+                                <th class="sticky-header py-1 px-2 min-w-[120px] border-t-0">Employee ID</th>
+                                <th class="sticky-header py-1 px-2 min-w-[120px] border-t-0">Password</th>
+                                <th class="sticky-header py-1 px-2 min-w-[100px] border-t-0">Access</th>
+                                <th class="sticky-header py-1 px-2 min-w-[60px] text-center border-t-0 border-r-0">Select</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body">
+                            {% for user in users %}
+                            <tr>
+                                <td class="p-0 border-l-0">
+                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                    <input type="text" name="fullname" value="{{ user.fullname }}" class="excel-input">
+                                </td>
+                                <td class="p-0">
+                                    <input type="email" name="email" value="{{ user.email }}" class="excel-input">
+                                </td>
+                                <td class="p-0">
+                                    <select name="team" class="excel-input">
+                                        <option value="Others" {% if user.team == 'Others' %}selected{% endif %}>Others</option>
+                                        {% for t in teams %}
+                                        <option value="{{ t.name }}" {% if user.team == t.name %}selected{% endif %}>{{ t.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td class="p-0">
+                                    <input type="text" name="username" value="{{ user.username }}" class="excel-input">
+                                </td>
+                                <td class="p-0">
+                                    <input type="text" name="password" value="{{ user.password }}" class="excel-input">
+                                </td>
+                                <td class="p-0">
+                                    <select name="access_role" class="excel-input">
+                                        <option value="Pending" {% if user.access_role == 'Pending' %}selected{% endif %}>Pending</option>
+                                        <option value="Viewer" {% if user.access_role == 'Viewer' %}selected{% endif %}>Viewer</option>
+                                        <option value="OQA" {% if user.access_role == 'OQA' %}selected{% endif %}>OQA</option>
+                                        <option value="Main PIC" {% if user.access_role == 'Main PIC' %}selected{% endif %}>Main PIC</option>
+                                        <option value="Admin" {% if user.access_role == 'Admin' %}selected{% endif %}>Admin</option>
+                                    </select>
+                                </td>
+                                <td class="p-0 text-center border-r-0">
+                                    <input type="checkbox" class="w-4 h-4 cursor-pointer user-select-checkbox">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            <div class="p-3 border-t border-gray-400 shrink-0 flex items-center gap-2 max-lg:gap-1 overflow-x-auto whitespace-nowrap no-scrollbar bg-white z-10">
+                <button type="button" onclick="addUserRow()" class="btn-primary shrink-0">
+                    + Add User
+                </button>
+                <button type="button" onclick="deleteSelectedUsers()" class="btn-primary shrink-0">
+                    - Remove User
+                </button>
+                <button type="submit" class="btn-primary shrink-0 ml-auto">
+                    Save User
+                </button>
+            </div>
+            </div>
+        </form>
+        </div>
+        </main>
+    <script>
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('main-sidebar');
+            const overlay = document.getElementById('mobile-menu-overlay');
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
