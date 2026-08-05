@@ -11,11 +11,8 @@ from backend.core.database import sanitize_folder_name
 FOLDER_ID = os.getenv("GOOGLE_DRIVE_FOLDER_ID", GDRIVE_ROOT_FOLDER_ID or "1RrtvhZdZ_76YX2ywbkyvPDMQ86KMt7nE")
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
-
 def get_gdrive_service():
     creds = None
-    
-    # 1. Thử dùng OAuth 2.0 Credentials (Đóng vai trực tiếp chính tài khoản Gmail 15GB của Sếp)
     oauth_json_str = os.getenv("GOOGLE_OAUTH_TOKEN_JSON")
     if oauth_json_str:
         try:
@@ -48,7 +45,6 @@ def get_gdrive_service():
             except Exception as e:
                 print(f"[GDRIVE] Error reading gdrive_oauth_token.json: {e}")
                 
-    # 2. Dùng Service Account Credentials
     if not creds:
         creds_json_str = os.getenv("GOOGLE_CREDENTIALS_JSON")
         if creds_json_str:
@@ -92,14 +88,29 @@ def get_or_create_subfolder(service, parent_id, folder_name):
     ).execute()
     return folder.get('id')
 
+def _clean_parts(rel_path: str):
+    clean = rel_path.replace("\\", "/").strip("/")
+    parts = [p for p in clean.split("/") if p and p != ".." and p != "."]
+    if len(parts) >= 2 and parts[0] == "User Data" and parts[1] == "MP readiness data":
+        parts = parts[2:]
+    elif len(parts) >= 1 and (parts[0] == "User Data" or parts[0] == "MP readiness data"):
+        parts = parts[1:]
+    return parts
+
 def upload_file_to_gdrive(local_path: str, rel_path: str):
     service = get_gdrive_service()
     if not service or not os.path.exists(local_path):
         return None
         
     try:
-        current_parent = FOLDER_ID
-        parts = rel_path.replace("\\", "/").strip("/").split("/")
+        user_data_id = get_or_create_subfolder(service, FOLDER_ID, "User Data")
+        mp_readiness_id = get_or_create_subfolder(service, user_data_id, "MP readiness data")
+        
+        parts = _clean_parts(rel_path)
+        if not parts:
+            return None
+            
+        current_parent = mp_readiness_id
         filename = parts[-1]
         subfolders = parts[:-1]
         
@@ -218,7 +229,10 @@ def upload_html_content_to_gdrive(rel_path: str, html_content: str):
         mp_readiness_folder_id = get_or_create_subfolder(service, user_data_folder_id, "MP readiness data")
         
         current_parent = mp_readiness_folder_id
-        parts = rel_path.replace("\\", "/").strip("/").split("/")
+        parts = _clean_parts(rel_path)
+        if not parts:
+            return None
+            
         filename = parts[-1]
         subfolders = parts[:-1]
         
@@ -266,7 +280,10 @@ def read_html_content_from_gdrive(rel_path: str) -> str:
         mp_readiness_folder_id = get_or_create_subfolder(service, user_data_folder_id, "MP readiness data")
         
         current_parent = mp_readiness_folder_id
-        parts = rel_path.replace("\\", "/").strip("/").split("/")
+        parts = _clean_parts(rel_path)
+        if not parts:
+            return ""
+            
         filename = parts[-1]
         subfolders = parts[:-1]
         
@@ -307,7 +324,7 @@ def create_folder_on_gdrive(model_name: str):
         mp_readiness_folder_id = get_or_create_subfolder(service, user_data_folder_id, "MP readiness data")
         
         current_parent = mp_readiness_folder_id
-        parts = model_name.replace("\\", "/").strip("/").split("/")
+        parts = _clean_parts(model_name)
         for sf in parts:
             if sf:
                 current_parent = get_or_create_subfolder(service, current_parent, sf)
@@ -325,37 +342,44 @@ def delete_folder_on_gdrive(model_name: str):
         user_data_folder_id = get_or_create_subfolder(service, FOLDER_ID, "User Data")
         mp_readiness_folder_id = get_or_create_subfolder(service, user_data_folder_id, "MP readiness data")
         
-        query = f"'{mp_readiness_folder_id}' in parents and name = '{model_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+        parts = _clean_parts(model_name)
+        target_name = parts[-1] if parts else model_name
+        
+        query = f"'{mp_readiness_folder_id}' in parents and name = '{target_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
         res = service.files().list(q=query, spaces='drive', fields='files(id)').execute()
         files = res.get('files', [])
         for f in files:
             service.files().update(fileId=f['id'], body={'trashed': True}).execute()
-            print(f"[GDRIVE FOLDER DELETE] Trashed model folder: {model_name} ({f['id']})")
+            print(f"[GDRIVE FOLDER DELETE] Trashed model folder: {target_name} ({f['id']})")
         return True
     except Exception as e:
         print(f"[GDRIVE FOLDER DELETE ERROR] Failed to delete model folder {model_name}: {e}")
         return False
 
 def reconcile_gdrive_model_folders(active_model_names: list):
-    """
-    Ensures all active models exist under User Data/MP readiness data/ on Google Drive,
-    and trashes any orphaned model folders on Google Drive that are no longer in active_model_names.
-    """
     service = get_gdrive_service()
     if not service:
         return False
     try:
+        # Trash any invalid '..' folder under QA_Confirm_Gate_Data root
+        query_dot = f"'{FOLDER_ID}' in parents and name = '..' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+        res_dot = service.files().list(q=query_dot, spaces='drive', fields='files(id, name)').execute()
+        for dot_f in res_dot.get('files', []):
+            try:
+                service.files().update(fileId=dot_f['id'], body={'trashed': True}).execute()
+                print(f"[GDRIVE CLEANUP SUCCESS] Trashed invalid '..' folder: {dot_f['id']}")
+            except Exception as e:
+                print(f"[GDRIVE CLEANUP ERROR] {e}")
+
         user_data_folder_id = get_or_create_subfolder(service, FOLDER_ID, "User Data")
         mp_readiness_folder_id = get_or_create_subfolder(service, user_data_folder_id, "MP readiness data")
         
         safe_active_names = {sanitize_folder_name(name) for name in active_model_names if name}
         
-        # 1. List existing folders under MP readiness data on Google Drive
         query = f"'{mp_readiness_folder_id}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
         res = service.files().list(q=query, spaces='drive', fields='files(id, name)').execute()
         existing_drive_folders = {f['name']: f['id'] for f in res.get('files', [])}
         
-        # 2. Create missing folders for active models
         for model_name in active_model_names:
             if not model_name:
                 continue
@@ -363,7 +387,6 @@ def reconcile_gdrive_model_folders(active_model_names: list):
             if s_name not in existing_drive_folders:
                 create_folder_on_gdrive(s_name)
                 
-        # 3. Trash orphaned folders on Drive that are no longer in active_model_names
         for folder_name, folder_id in existing_drive_folders.items():
             if folder_name not in safe_active_names:
                 try:
@@ -377,8 +400,3 @@ def reconcile_gdrive_model_folders(active_model_names: list):
     except Exception as e:
         print(f"[GDRIVE RECONCILE ERROR] Reconcile failed: {e}")
         return False
-
-
-
-
-
