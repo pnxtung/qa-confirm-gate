@@ -18,6 +18,42 @@ from backend.core.config import V00_TEMPLATES_PATH
 router = APIRouter()
 templates = Jinja2Templates(directory="frontend/templates")
 
+MAX_VERSION_SIZE_BYTES = 40 * 1024 * 1024  # 40 MB
+
+def get_version_total_size(version_id: str, new_html_content: str = None, new_files_bytes: int = 0) -> int:
+    if version_id.startswith("V00_"):
+        model_checklist_id = int(version_id.split("_")[1])
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT team, level_1, level_2 FROM model_checklist WHERE id = ?", (model_checklist_id,))
+        item = cursor.fetchone()
+        conn.close()
+        if not item:
+            return new_files_bytes
+        s_team = "".join(c if c.isalnum() else "_" for c in item['team'])
+        s_l1 = "".join(c if c.isalnum() else "_" for c in item['level_1'])
+        s_l2 = "".join(c if c.isalnum() else "_" for c in item['level_2'])
+        v_dir = os.path.join(V00_TEMPLATES_PATH, s_team, s_l1, s_l2, "V00").replace("\\", "/")
+    else:
+        v_dir = get_version_dir(int(version_id))
+
+    if not v_dir or not os.path.exists(v_dir):
+        return new_files_bytes
+
+    total = new_files_bytes
+    for fn in os.listdir(v_dir):
+        fp = os.path.join(v_dir, fn)
+        if os.path.isfile(fp):
+            if fn == "content.html" and new_html_content is not None:
+                total += len(new_html_content.encode('utf-8'))
+            else:
+                total += os.path.getsize(fp)
+
+    if new_html_content is not None and not os.path.exists(os.path.join(v_dir, "content.html")):
+        total += len(new_html_content.encode('utf-8'))
+
+    return total
+
 # Render giao diện trang Upload
 @router.get("/upload")
 async def get_upload_empty(request: Request, model_id: int = None):
@@ -158,7 +194,14 @@ async def api_get_documents(request: Request, model_checklist_id: int):
         v['progress'] = [dict(p) for p in cursor.fetchall()]
         
         cursor.execute("SELECT * FROM document_files WHERE version_id = ? ORDER BY id ASC", (v['id'],))
-        v['files'] = [dict(f) for f in cursor.fetchall()]
+        db_files = [dict(f) for f in cursor.fetchall()]
+        for f in db_files:
+            fp = f.get('filepath')
+            if fp and os.path.exists(fp):
+                f['size'] = os.path.getsize(fp)
+            else:
+                f['size'] = 0
+        v['files'] = db_files
         
     cursor.execute("""
         SELECT mc.team, mc.level_1, mc.level_2 
@@ -182,10 +225,12 @@ async def api_get_documents(request: Request, model_checklist_id: int):
             v00_files = []
             for fname in os.listdir(v00_dir):
                 if fname != "content.html":
+                    fp = os.path.join(v00_dir, fname)
                     v00_files.append({
                         "id": f"V00_{model_checklist_id}_{fname}",
                         "filename": fname,
-                        "file_path": os.path.join(v00_dir, fname)
+                        "file_path": fp,
+                        "size": os.path.getsize(fp) if os.path.isfile(fp) else 0
                     })
 
             versions.append({
@@ -640,6 +685,11 @@ async def api_save_content(request: Request, version_id: str, background_tasks: 
         conn.commit()
     conn.close()
 
+    # Check 40MB limit before saving
+    total_size = get_version_total_size(version_id, new_html_content=html_content)
+    if total_size > MAX_VERSION_SIZE_BYTES:
+        return {"success": False, "error": "Không thể lưu do tổng dung lượng version vượt quá 40MB!"}
+
     # Save HTML using unified StorageAdapter with Async BackgroundTasks
     StorageAdapter.save_document_html(model_name, team, level_1, level_2, version_no, html_content, background_tasks)
         
@@ -675,6 +725,18 @@ async def api_upload_files(request: Request, version_id: str, files: List[Upload
         if lock_err:
             conn.close()
             return {"success": False, "error": lock_err}
+    
+    # Calculate new files size and validate total version size
+    new_files_bytes = 0
+    for file in files:
+        file_content = await file.read()
+        await file.seek(0)
+        new_files_bytes += len(file_content)
+
+    total_size = get_version_total_size(version_id, new_files_bytes=new_files_bytes)
+    if total_size > MAX_VERSION_SIZE_BYTES:
+        conn.close()
+        return {"success": False, "error": "Không thể lưu do tổng dung lượng version vượt quá 40MB!"}
     
     is_v00 = version_id.startswith("V00_")
     if is_v00:

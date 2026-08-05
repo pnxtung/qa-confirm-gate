@@ -617,8 +617,37 @@
             console.error(e);
         }
     }
+    const MAX_VERSION_SIZE_BYTES = 40 * 1024 * 1024; // 40 MB
+
+    function calculateTotalVersionSize() {
+        let totalBytes = 0;
+        const contentHtml = tinyEditor ? tinyEditor.getContent() : '';
+        if (contentHtml) {
+            totalBytes += new Blob([contentHtml]).size;
+        }
+        if (currentVersion && currentVersion.files) {
+            currentVersion.files.forEach(f => {
+                if (!pendingDeletes.includes(f.id)) {
+                    totalBytes += (f.size || 0);
+                }
+            });
+        }
+        if (pendingUploads && pendingUploads.length > 0) {
+            pendingUploads.forEach(f => {
+                totalBytes += (f.size || 0);
+            });
+        }
+        return totalBytes;
+    }
+
     async function performSave() {
         if (!currentVersion) return false;
+        
+        const totalVersionSize = calculateTotalVersionSize();
+        if (totalVersionSize > MAX_VERSION_SIZE_BYTES) {
+            alert("Không thể lưu do tổng dung lượng version vượt quá 40MB!");
+            return false;
+        }
         
         const isTemplate = currentVersion.status === 'Template';
         
@@ -663,14 +692,21 @@
                     for (let i = 0; i < pendingUploads.length; i++) {
                         formData.append('files', pendingUploads[i]);
                     }
-                    await fetch('/api/documents/version/' + currentVersion.id + '/files', {
+                    const filesRes = await fetch('/api/documents/version/' + currentVersion.id + '/files', {
                         method: 'POST',
                         body: formData
                     });
+                    const filesData = await filesRes.json();
+                    if (!filesData.success) {
+                        alert(filesData.error || "Không thể lưu do tổng dung lượng version vượt quá 40MB!");
+                        return false;
+                    }
                 }
                 return true;
+            } else {
+                alert(data.error || "Không thể lưu do tổng dung lượng version vượt quá 40MB!");
+                return false;
             }
-            return false;
         } catch(e) { 
             console.error(e); 
             return false;
