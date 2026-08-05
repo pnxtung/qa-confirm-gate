@@ -37,8 +37,7 @@ async def post_register(
         )
         conn.commit()
         conn.close()
-        from backend.core.gdrive_storage import sync_database_to_gdrive
-        sync_database_to_gdrive()
+        StorageAdapter.sync_database()
     except sqlite3.IntegrityError:
         try: conn.close()
         except: pass

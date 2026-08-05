@@ -80,8 +80,7 @@ async def save_teams(
         cursor.execute("UPDATE users SET team = 'Others' WHERE team NOT IN (SELECT name FROM teams)")
         conn.commit()
         conn.close()
-        from backend.core.gdrive_storage import sync_database_to_gdrive
-        sync_database_to_gdrive()
+        StorageAdapter.sync_database()
         return {"success": True}
     except Exception as e:
         print("Error saving teams:", e)
@@ -127,8 +126,7 @@ async def bulk_update(
                 """, (fullname[i], email[i], team[i], username[i], password[i], access_role[i], user_id[i]))
         conn.commit()
         conn.close()
-        from backend.core.gdrive_storage import sync_database_to_gdrive
-        sync_database_to_gdrive()
+        StorageAdapter.sync_database()
         return {"success": True}
     except Exception:
         try: conn.close()
@@ -176,8 +174,7 @@ async def delete_user(request: Request, target_id: int):
     cursor.execute("DELETE FROM users WHERE id = ?", (target_id,))
     conn.commit()
     conn.close()
-    from backend.core.gdrive_storage import sync_database_to_gdrive
-    sync_database_to_gdrive()
+    StorageAdapter.sync_database()
     return {"success": True}
 
 # Bật khóa sửa Admin Management

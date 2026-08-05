@@ -384,8 +384,7 @@ async def api_create_version(request: Request, model_checklist_id: int):
                 f.write("")
 
     conn.commit()
-    from backend.core.gdrive_storage import sync_database_to_gdrive
-    sync_database_to_gdrive()
+    StorageAdapter.sync_database()
     conn.close()
     
     return {"success": True, "version_id": new_version_id, "version_no": next_ver}
@@ -420,8 +419,7 @@ async def api_submit_version(request: Request, version_id: int):
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cursor.execute("UPDATE document_versions SET status = 'Pending', uploaded_at = ? WHERE id = ?", (now_str, version_id))
     conn.commit()
-    from backend.core.gdrive_storage import sync_database_to_gdrive
-    sync_database_to_gdrive()
+    StorageAdapter.sync_database()
     conn.close()
     return {"success": True}
 
@@ -468,8 +466,7 @@ async def api_cancel_upload(request: Request, version_id: int):
         """, (version_id,))
         
         conn.commit()
-        from backend.core.gdrive_storage import sync_database_to_gdrive
-        sync_database_to_gdrive()
+        StorageAdapter.sync_database()
     except Exception as e:
         conn.rollback()
         return {"success": False, "error": str(e)}
@@ -512,8 +509,7 @@ async def api_delete_version(request: Request, version_id: int):
     cursor.execute("DELETE FROM document_versions WHERE id = ?", (version_id,))
     
     conn.commit()
-    from backend.core.gdrive_storage import sync_database_to_gdrive
-    sync_database_to_gdrive()
+    StorageAdapter.sync_database()
     conn.close()
     
     if v_dir and os.path.exists(v_dir):

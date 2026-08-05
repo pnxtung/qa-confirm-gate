@@ -382,8 +382,7 @@ async def api_save_checklist_remark(request: Request, item_id: int):
     
     cursor.execute("UPDATE model_checklist SET remark = ?, updated_at = ? WHERE id = ?", (remark, new_updated_at, item_id))
     conn.commit()
-    from backend.core.gdrive_storage import sync_database_to_gdrive
-    sync_database_to_gdrive()
+    StorageAdapter.sync_database()
     conn.close()
     return {"success": True, "updated_at": new_updated_at}
 
@@ -424,8 +423,7 @@ async def api_add_to_model_checklist(request: Request, model_id: int):
                 path = os.path.join(MP_READINESS_DATA_PATH, s_model, s_team, s_l1, s_l2).replace("\\", "/")
                 os.makedirs(path, exist_ok=True)
         conn.commit()
-        from backend.core.gdrive_storage import sync_database_to_gdrive
-        sync_database_to_gdrive()
+        StorageAdapter.sync_database()
     except Exception as e:
         conn.close()
         return {"error": str(e)}
@@ -452,8 +450,7 @@ async def api_remove_from_model_checklist(request: Request, model_id: int):
     cursor.execute(f"DELETE FROM document_versions WHERE model_checklist_id IN (SELECT id FROM model_checklist WHERE model_id=? AND id IN ({placeholders}))", [model_id] + item_ids)
     cursor.execute(f"DELETE FROM model_checklist WHERE model_id=? AND id IN ({placeholders})", [model_id] + item_ids)
     conn.commit()
-    from backend.core.gdrive_storage import sync_database_to_gdrive
-    sync_database_to_gdrive()
+    StorageAdapter.sync_database()
     conn.close()
     
     return {"success": True}
