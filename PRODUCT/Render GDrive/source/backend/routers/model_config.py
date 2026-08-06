@@ -182,14 +182,18 @@ async def api_delete_model(request: Request, model_id: int, background_tasks: Ba
     
     cursor.execute("SELECT name FROM models WHERE id=?", (model_id,))
     model_row = cursor.fetchone()
-    if model_row:
-        model_name = model_row[0]
-        StorageAdapter.delete_model_folder(model_name, background_tasks)
+    model_name = model_row[0] if model_row else None
         
     cursor.execute("DELETE FROM document_versions WHERE model_checklist_id IN (SELECT id FROM model_checklist WHERE model_id=?)", (model_id,))
     cursor.execute("DELETE FROM models WHERE id=?", (model_id,))
     cursor.execute("DELETE FROM model_checklist WHERE model_id=?", (model_id,))
     conn.commit()
+
+    if model_name:
+        StorageAdapter.delete_model_folder(model_name, background_tasks)
+    cursor.execute("SELECT name FROM models")
+    active_models = [r[0] for r in cursor.fetchall() if r[0]]
+    StorageAdapter.reconcile_model_folders(active_models, background_tasks)
     StorageAdapter.sync_database(background_tasks)
     conn.close()
     return {"success": True}

@@ -16,7 +16,10 @@ def get_gdrive_service():
     oauth_json_str = os.getenv("GOOGLE_OAUTH_TOKEN_JSON")
     if oauth_json_str:
         try:
-            info = json.loads(oauth_json_str)
+            clean_str = oauth_json_str.strip()
+            if (clean_str.startswith("'") and clean_str.endswith("'")) or (clean_str.startswith('"') and clean_str.endswith('"')):
+                clean_str = clean_str[1:-1].strip()
+            info = json.loads(clean_str)
             creds = OAuthCredentials(
                 token=None,
                 refresh_token=info.get("refresh_token"),
