@@ -97,6 +97,17 @@ def get_gdrive_service():
         print(f"[GDRIVE] Error building drive service: {e}")
         return None
 
+_FOLDER_CACHE = {}
+
+def get_cached_subfolder(service, parent_id, folder_name):
+    cache_key = (parent_id, folder_name)
+    if cache_key in _FOLDER_CACHE:
+        return _FOLDER_CACHE[cache_key]
+    folder_id = get_or_create_subfolder(service, parent_id, folder_name)
+    if folder_id:
+        _FOLDER_CACHE[cache_key] = folder_id
+    return folder_id
+
 def get_or_create_subfolder(service, parent_id, folder_name):
     query = f"'{parent_id}' in parents and name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
     response = service.files().list(
@@ -349,14 +360,14 @@ def create_folder_on_gdrive(model_name: str):
     if not service:
         return None
     try:
-        user_data_folder_id = get_or_create_subfolder(service, FOLDER_ID, "User Data")
-        mp_readiness_folder_id = get_or_create_subfolder(service, user_data_folder_id, "MP readiness data")
+        user_data_folder_id = get_cached_subfolder(service, FOLDER_ID, "User Data")
+        mp_readiness_folder_id = get_cached_subfolder(service, user_data_folder_id, "MP readiness data")
         
         current_parent = mp_readiness_folder_id
         parts = _clean_parts(model_name)
         for sf in parts:
             if sf:
-                current_parent = get_or_create_subfolder(service, current_parent, sf)
+                current_parent = get_cached_subfolder(service, current_parent, sf)
         print(f"[GDRIVE FOLDER] Created model folder under User Data/MP readiness data/: {model_name} ({current_parent})")
         return current_parent
     except Exception as e:
@@ -368,8 +379,8 @@ def delete_folder_on_gdrive(model_name: str):
     if not service:
         return False
     try:
-        user_data_folder_id = get_or_create_subfolder(service, FOLDER_ID, "User Data")
-        mp_readiness_folder_id = get_or_create_subfolder(service, user_data_folder_id, "MP readiness data")
+        user_data_folder_id = get_cached_subfolder(service, FOLDER_ID, "User Data")
+        mp_readiness_folder_id = get_cached_subfolder(service, user_data_folder_id, "MP readiness data")
         
         parts = _clean_parts(model_name)
         target_name = parts[-1] if parts else model_name

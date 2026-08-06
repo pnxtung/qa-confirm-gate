@@ -771,9 +771,10 @@ async def api_upload_files(request: Request, version_id: str, files: List[Upload
             f.write(content)
             
         try:
+            from backend.core.gdrive_queue import gdrive_worker_queue
             from backend.core.gdrive_storage import upload_file_to_gdrive
-            rel_path = os.path.relpath(file_path, start=".")
-            upload_file_to_gdrive(file_path, rel_path)
+            rel_path = os.path.relpath(file_path, start=".").replace("\\", "/")
+            gdrive_worker_queue.enqueue(upload_file_to_gdrive, file_path, rel_path)
         except Exception as e:
             print(f"[GDRIVE SYNC ERROR] {e}")
             

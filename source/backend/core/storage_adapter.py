@@ -13,6 +13,7 @@ from backend.core.gdrive_storage import (
     delete_folder_on_gdrive,
     reconcile_gdrive_model_folders
 )
+from backend.core.gdrive_queue import gdrive_worker_queue
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ class StorageAdapter:
 
     @classmethod
     def save_document_html(cls, model_name: str, team: str, level_1: str, level_2: str, version_name: str, html_content: str, background_tasks=None) -> bool:
+        # Instant local container save
         try:
             local_file_path = cls.get_local_html_path(model_name, team, level_1, level_2, version_name)
             os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
@@ -40,13 +42,9 @@ class StorageAdapter:
         except Exception as e:
             logger.error(f"[STORAGE LOCAL CACHE ERROR] {e}")
 
+        # Queued background GDrive upload
         rel_path = f"{model_name}/{team}/{level_1}/{level_2}/{version_name}/content.html"
-        try:
-            upload_html_content_to_gdrive(rel_path, html_content)
-            logger.info(f"[STORAGE GDRIVE] Uploaded {rel_path} to Google Drive")
-        except Exception as e:
-            logger.error(f"[STORAGE GDRIVE ERROR] Sync failed: {e}")
-
+        gdrive_worker_queue.enqueue(upload_html_content_to_gdrive, rel_path, html_content)
         return True
 
     @classmethod
@@ -74,38 +72,22 @@ class StorageAdapter:
 
     @classmethod
     def sync_database(cls, background_tasks=None):
-        try:
-            sync_database_to_gdrive()
-            logger.info("[STORAGE DB GDRIVE] Synced database.db to Google Drive")
-        except Exception as e:
-            logger.error(f"[STORAGE DB GDRIVE ERROR] {e}")
+        gdrive_worker_queue.enqueue(sync_database_to_gdrive)
 
     @classmethod
     def create_model_folder(cls, model_name: str, background_tasks=None):
         if not model_name:
             return
         s_name = sanitize_folder_name(model_name)
-        try:
-            create_folder_on_gdrive(s_name)
-            logger.info(f"[STORAGE GDRIVE] Created model folder '{s_name}' on Drive")
-        except Exception as e:
-            logger.error(f"[STORAGE GDRIVE ERROR] Failed to create model folder on Drive: {e}")
+        gdrive_worker_queue.enqueue(create_folder_on_gdrive, s_name)
 
     @classmethod
     def delete_model_folder(cls, model_name: str, background_tasks=None):
         if not model_name:
             return
         s_name = sanitize_folder_name(model_name)
-        try:
-            delete_folder_on_gdrive(s_name)
-            logger.info(f"[STORAGE GDRIVE] Deleted model folder '{s_name}' on Drive")
-        except Exception as e:
-            logger.error(f"[STORAGE GDRIVE ERROR] Failed to delete model folder on Drive: {e}")
+        gdrive_worker_queue.enqueue(delete_folder_on_gdrive, s_name)
 
     @classmethod
     def reconcile_model_folders(cls, active_model_names: list, background_tasks=None):
-        try:
-            reconcile_gdrive_model_folders(active_model_names)
-            logger.info(f"[STORAGE GDRIVE RECONCILE] Completed for {len(active_model_names)} models")
-        except Exception as e:
-            logger.error(f"[STORAGE GDRIVE RECONCILE ERROR] {e}")
+        gdrive_worker_queue.enqueue(reconcile_gdrive_model_folders, active_model_names)
