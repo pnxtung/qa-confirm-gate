@@ -1,9 +1,27 @@
+# Python & Virtual Environments
 python_env/
-QA_Confirm_Gate_Portable.zip
-tools/
-.agent/
-*.pyc
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# System & IDE files
+.DS_Store
+Thumbs.db
 .vscode/
 .idea/
+.agent/
+
+# Sensitive Credentials & Environment Configs
 *.json
+.env
+*.pem
+*.key
+
+# Local Data & User Cache (Prevents local test DBs from cluttering GitHub)
+data/
+User Data/
+*.db
+*.log
+*.zip
+*.tar.gz
