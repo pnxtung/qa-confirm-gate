@@ -97,24 +97,6 @@ def get_gdrive_service():
         print(f"[GDRIVE] Error building drive service: {e}")
         return None
 
-def check_gdrive_connection() -> dict:
-    service = get_gdrive_service()
-    if service is not None:
-        try:
-            about = service.about().get(fields="user(displayName, emailAddress)").execute()
-            return {
-                "status": "connected",
-                "user": about.get("user", {}).get("emailAddress", "OK"),
-                "folder_id": FOLDER_ID
-            }
-        except Exception as e:
-            return {"status": "error", "error": f"API Call Failed: {e}"}
-    else:
-        return {
-            "status": "disconnected",
-            "error": "get_gdrive_service() returned None."
-        }
-
 def get_or_create_subfolder(service, parent_id, folder_name):
     query = f"'{parent_id}' in parents and name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
     response = service.files().list(
