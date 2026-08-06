@@ -155,6 +155,8 @@ async def api_save_model(request: Request, background_tasks: BackgroundTasks):
         conn.commit()
         cursor.execute("SELECT name FROM models")
         active_models = [r[0] for r in cursor.fetchall() if r[0]]
+        if data.get("name"):
+            StorageAdapter.create_model_folder(data.get("name"), background_tasks)
         StorageAdapter.reconcile_model_folders(active_models, background_tasks)
         StorageAdapter.sync_database(background_tasks)
     except Exception as e:

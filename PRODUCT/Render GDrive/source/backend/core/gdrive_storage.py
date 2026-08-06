@@ -377,7 +377,7 @@ def reconcile_gdrive_model_folders(active_model_names: list):
         safe_active_names = {sanitize_folder_name(name) for name in active_model_names if name}
         
         query = f"'{mp_readiness_folder_id}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
-        res = service.files().list(q=query, spaces='drive', fields='files(id, name)').execute()
+        res = service.files().list(q=query, spaces='drive', fields='files(id, name)', pageSize=1000).execute()
         existing_drive_folders = {f['name']: f['id'] for f in res.get('files', [])}
         
         for model_name in active_model_names:
