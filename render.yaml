@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: qa-confirm-gate-render
-    env: python
-    buildCommand: pip install -r "PRODUCT/Render GDrive/source/requirements.txt"
-    startCommand: cd "PRODUCT/Render GDrive/source" && uvicorn main:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
