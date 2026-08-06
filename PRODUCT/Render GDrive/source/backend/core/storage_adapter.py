@@ -1,7 +1,6 @@
 import os
 import logging
 from backend.core.config import (
-    SYNC_MODE,
     MP_READINESS_DATA_PATH,
     V00_TEMPLATES_PATH
 )
@@ -33,10 +32,6 @@ class StorageAdapter:
 
     @classmethod
     def save_document_html(cls, model_name: str, team: str, level_1: str, level_2: str, version_name: str, html_content: str, background_tasks=None) -> bool:
-        """
-        Saves document HTML content to local container cache and syncs to Google Drive.
-        """
-        # Save to local container cache
         try:
             local_file_path = cls.get_local_html_path(model_name, team, level_1, level_2, version_name)
             os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
@@ -45,24 +40,17 @@ class StorageAdapter:
         except Exception as e:
             logger.error(f"[STORAGE LOCAL CACHE ERROR] {e}")
 
-        # Cloud Google Drive Storage
         rel_path = f"{model_name}/{team}/{level_1}/{level_2}/{version_name}/content.html"
-        if SYNC_MODE == "ASYNC" and background_tasks is not None:
-            background_tasks.add_task(upload_html_content_to_gdrive, rel_path, html_content)
-            logger.info(f"[STORAGE GDRIVE] Scheduled background upload for {rel_path}")
-        else:
-            try:
-                upload_html_content_to_gdrive(rel_path, html_content)
-            except Exception as e:
-                logger.error(f"[STORAGE GDRIVE ERROR] Sync failed: {e}")
+        try:
+            upload_html_content_to_gdrive(rel_path, html_content)
+            logger.info(f"[STORAGE GDRIVE] Uploaded {rel_path} to Google Drive")
+        except Exception as e:
+            logger.error(f"[STORAGE GDRIVE ERROR] Sync failed: {e}")
 
         return True
 
     @classmethod
     def read_document_html(cls, model_name: str, team: str, level_1: str, level_2: str, version_name: str) -> str:
-        """
-        Reads document HTML content. Tries local cache first, then fetches directly from Google Drive.
-        """
         local_file_path = cls.get_local_html_path(model_name, team, level_1, level_2, version_name)
         if os.path.exists(local_file_path):
             with open(local_file_path, "r", encoding="utf-8") as f:
@@ -86,59 +74,38 @@ class StorageAdapter:
 
     @classmethod
     def sync_database(cls, background_tasks=None):
-        """
-        Syncs database.db to Google Drive.
-        """
-        if SYNC_MODE == "ASYNC" and background_tasks is not None:
-            background_tasks.add_task(sync_database_to_gdrive)
-            logger.info("[STORAGE DB GDRIVE] Scheduled background DB sync to Google Drive")
-        else:
-            try:
-                sync_database_to_gdrive()
-            except Exception as e:
-                logger.error(f"[STORAGE DB GDRIVE ERROR] {e}")
+        try:
+            sync_database_to_gdrive()
+            logger.info("[STORAGE DB GDRIVE] Synced database.db to Google Drive")
+        except Exception as e:
+            logger.error(f"[STORAGE DB GDRIVE ERROR] {e}")
 
     @classmethod
     def create_model_folder(cls, model_name: str, background_tasks=None):
-        """
-        Creates model root folder on Google Drive.
-        """
         if not model_name:
             return
         s_name = sanitize_folder_name(model_name)
-        if SYNC_MODE == "ASYNC" and background_tasks is not None:
-            background_tasks.add_task(create_folder_on_gdrive, s_name)
-        else:
-            try:
-                create_folder_on_gdrive(s_name)
-            except Exception as e:
-                logger.error(f"[STORAGE GDRIVE ERROR] Failed to create model folder on Drive: {e}")
+        try:
+            create_folder_on_gdrive(s_name)
+            logger.info(f"[STORAGE GDRIVE] Created model folder '{s_name}' on Drive")
+        except Exception as e:
+            logger.error(f"[STORAGE GDRIVE ERROR] Failed to create model folder on Drive: {e}")
 
     @classmethod
     def delete_model_folder(cls, model_name: str, background_tasks=None):
-        """
-        Deletes model folder on Google Drive.
-        """
         if not model_name:
             return
         s_name = sanitize_folder_name(model_name)
-        if SYNC_MODE == "ASYNC" and background_tasks is not None:
-            background_tasks.add_task(delete_folder_on_gdrive, s_name)
-        else:
-            try:
-                delete_folder_on_gdrive(s_name)
-            except Exception as e:
-                logger.error(f"[STORAGE GDRIVE ERROR] Failed to delete model folder on Drive: {e}")
+        try:
+            delete_folder_on_gdrive(s_name)
+            logger.info(f"[STORAGE GDRIVE] Deleted model folder '{s_name}' on Drive")
+        except Exception as e:
+            logger.error(f"[STORAGE GDRIVE ERROR] Failed to delete model folder on Drive: {e}")
 
     @classmethod
     def reconcile_model_folders(cls, active_model_names: list, background_tasks=None):
-        """
-        Reconciles model folders directly on Google Drive.
-        """
-        if SYNC_MODE == "ASYNC" and background_tasks is not None:
-            background_tasks.add_task(reconcile_gdrive_model_folders, active_model_names)
-        else:
-            try:
-                reconcile_gdrive_model_folders(active_model_names)
-            except Exception as e:
-                logger.error(f"[STORAGE GDRIVE RECONCILE ERROR] {e}")
+        try:
+            reconcile_gdrive_model_folders(active_model_names)
+            logger.info(f"[STORAGE GDRIVE RECONCILE] Completed for {len(active_model_names)} models")
+        except Exception as e:
+            logger.error(f"[STORAGE GDRIVE RECONCILE ERROR] {e}")
