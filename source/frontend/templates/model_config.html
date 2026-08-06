@@ -160,7 +160,7 @@
                                 <th class="sticky-header py-1 px-2 min-w-[80px] border-t-0">Ship1st Qty</th>
                                 <th class="sticky-header py-1 px-2 min-w-[80px] border-t-0">Status</th>
                                 <th class="sticky-header py-1 px-2 min-w-[80px] border-t-0">Activate</th>
-                                <th class="sticky-header py-1 px-2 min-w-[60px] border-t-0 border-r-0 text-center"><input type="checkbox" id="header-select-all-models" class="w-4 h-4 cursor-pointer" title="Tích chọn tất cả"></th>
+                                <th class="sticky-header py-1 px-2 min-w-[60px] border-t-0 border-r-0">Select</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -365,16 +365,7 @@
             });
             this.setAttribute('data-selected', !isSelected);
         });
-        // Multi-select helper for Model List header
-        document.getElementById('header-select-all-models')?.addEventListener('change', function() {
-            const isChecked = this.checked;
-            modelTbody.querySelectorAll('.model-select-checkbox').forEach(cb => {
-                const tr = cb.closest('tr');
-                if (!tr.classList.contains('hidden')) {
-                    cb.checked = isChecked;
-                }
-            });
-        });
+
 
         // Query Button
         document.getElementById('btn-query-model')?.addEventListener('click', async () => {
