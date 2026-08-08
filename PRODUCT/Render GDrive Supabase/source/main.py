@@ -8,6 +8,7 @@ from backend.routers.dashboard import router as dashboard_router
 from backend.routers.admin_management import router as admin_management_router
 from backend.routers.model_config import router as model_config_router
 from backend.routers.upload_document import router as upload_document_router
+from backend.routers.about_us import router as about_us_router
 from backend.core.config import DB_PATH, MP_READINESS_DATA_PATH, V00_TEMPLATES_PATH, STORAGE_DB_PROVIDERS
 from backend.core.gdrive_storage import restore_database_from_gdrive
 
@@ -35,6 +36,9 @@ async def startup_event():
 
     if "GDRIVE" in STORAGE_DB_PROVIDERS:
         restore_database_from_gdrive()
+
+    from backend.core.storage_adapter import StorageAdapter
+    StorageAdapter.restore_feedbacks_csv()
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -84,6 +88,15 @@ async def startup_event():
             id INTEGER PRIMARY KEY, config_updated_at INTEGER, last_updated_by TEXT
         )
     """)
+    cursor.execute('''CREATE TABLE IF NOT EXISTS site_content (
+                        id INTEGER PRIMARY KEY,
+                        about_us TEXT
+                    )''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS access_logs (
+                        access_date TEXT PRIMARY KEY,
+                        access_count INTEGER DEFAULT 0
+                    )''')
+    cursor.execute("INSERT OR IGNORE INTO site_content (id, about_us) VALUES (1, '')")
     conn.commit()
 
     cursor.execute("SELECT * FROM users WHERE username = 'ADMINPNX'")
@@ -110,3 +123,4 @@ app.include_router(user_auth_router)
 app.include_router(admin_management_router)
 app.include_router(model_config_router)
 app.include_router(upload_document_router)
+app.include_router(about_us_router)

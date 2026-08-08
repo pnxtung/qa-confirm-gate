@@ -104,6 +104,33 @@ def upload_file_to_supabase(local_path: str, rel_path: str) -> bool:
         logger.error(f"[SUPABASE FILE EXCEPTION] {e}")
         return False
 
+def restore_file_from_supabase(rel_path: str, local_path: str) -> bool:
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return False
+
+    parts = _clean_parts(rel_path)
+    if not parts:
+        return False
+    storage_path = "/".join(parts)
+
+    url = f"{SUPABASE_URL.rstrip('/')}/storage/v1/object/authenticated/{SUPABASE_STORAGE_BUCKET}/{storage_path}"
+    headers = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"}
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            with open(local_path, "wb") as f:
+                f.write(response.content)
+            logger.info(f"[SUPABASE RESTORE FILE] Restored {storage_path}")
+            return True
+        else:
+            logger.error(f"[SUPABASE RESTORE FILE ERROR] {response.status_code}")
+            return False
+    except Exception as e:
+        logger.error(f"[SUPABASE RESTORE FILE EXCEPTION] {e}")
+        return False
+
 def init_supabase_defaults():
     if not SUPABASE_URL or not SUPABASE_KEY:
         return
@@ -181,7 +208,7 @@ def restore_database_from_supabase(db_path: str):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    tables = ["users", "teams", "models", "master_checklist", "model_checklist", "document_versions", "document_files"]
+    tables = ["users", "teams", "models", "master_checklist", "model_checklist", "document_versions", "document_files", "site_content", "access_logs"]
 
     for table in tables:
         rows = fetch_table_from_supabase(table)
@@ -208,7 +235,7 @@ def sync_database_to_supabase(db_path: str):
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
-    tables = ["users", "teams", "models", "master_checklist", "model_checklist", "document_versions", "document_files"]
+    tables = ["users", "teams", "models", "master_checklist", "model_checklist", "document_versions", "document_files", "site_content", "access_logs"]
 
     for table in tables:
         try:

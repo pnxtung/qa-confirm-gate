@@ -112,6 +112,27 @@ class StorageAdapter:
             gdrive_worker_queue.enqueue(sync_database_to_gdrive)
 
     @classmethod
+    def sync_feedbacks_csv(cls, background_tasks=None):
+        feedbacks_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../User Data/feedbacks/feedbacks.csv"))
+        if not os.path.exists(feedbacks_path): return
+        if "SUPABASE" in STORAGE_USERDATA_PROVIDERS:
+            from backend.core.supabase_storage import upload_file_to_supabase
+            gdrive_worker_queue.enqueue(upload_file_to_supabase, feedbacks_path, "User Data/feedbacks/feedbacks.csv")
+        if "GDRIVE" in STORAGE_USERDATA_PROVIDERS:
+            from backend.core.gdrive_storage import upload_file_to_gdrive
+            gdrive_worker_queue.enqueue(upload_file_to_gdrive, feedbacks_path, "User Data/feedbacks/feedbacks.csv")
+
+    @classmethod
+    def restore_feedbacks_csv(cls):
+        feedbacks_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../User Data/feedbacks/feedbacks.csv"))
+        if "SUPABASE" in STORAGE_USERDATA_PROVIDERS:
+            from backend.core.supabase_storage import restore_file_from_supabase
+            restore_file_from_supabase("User Data/feedbacks/feedbacks.csv", feedbacks_path)
+        elif "GDRIVE" in STORAGE_USERDATA_PROVIDERS:
+            from backend.core.gdrive_storage import restore_file_from_gdrive
+            restore_file_from_gdrive("User Data/feedbacks/feedbacks.csv", feedbacks_path)
+
+    @classmethod
     def create_model_folder(cls, model_name: str, background_tasks=None):
         if not model_name:
             return

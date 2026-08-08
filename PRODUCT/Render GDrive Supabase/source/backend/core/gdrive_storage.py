@@ -187,6 +187,55 @@ def upload_file_to_gdrive(local_path: str, rel_path: str):
         print(f"[GDRIVE] Error uploading {local_path}: {e}")
         return None
 
+def restore_file_from_gdrive(rel_path: str, local_path: str) -> bool:
+    service = get_gdrive_service()
+    if not service:
+        return False
+        
+    try:
+        user_data_id = get_or_create_subfolder(service, FOLDER_ID, "User Data")
+        mp_readiness_id = get_or_create_subfolder(service, user_data_id, "MP readiness data")
+        
+        parts = _clean_parts(rel_path)
+        if not parts:
+            return False
+            
+        current_parent = mp_readiness_id
+        filename = parts[-1]
+        subfolders = parts[:-1]
+        
+        for sf in subfolders:
+            if sf:
+                query = f"'{current_parent}' in parents and name = '{sf}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+                res = service.files().list(q=query, spaces='drive', fields='files(id)').execute()
+                files = res.get('files', [])
+                if not files:
+                    return False
+                current_parent = files[0]['id']
+                
+        query = f"'{current_parent}' in parents and name = '{filename}' and trashed = false"
+        res = service.files().list(q=query, spaces='drive', fields='files(id)').execute()
+        files = res.get('files', [])
+        
+        if not files:
+            return False
+            
+        file_id = files[0]['id']
+        request = service.files().get_media(fileId=file_id)
+        
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        fh = io.FileIO(local_path, 'wb')
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
+        fh.close()
+        print(f"[GDRIVE RESTORE FILE] Restored {rel_path} to {local_path}")
+        return True
+    except Exception as e:
+        print(f"[GDRIVE RESTORE FILE ERROR] {e}")
+        return False
+
 def sync_database_to_gdrive():
     if not os.path.exists(DB_PATH):
         return
