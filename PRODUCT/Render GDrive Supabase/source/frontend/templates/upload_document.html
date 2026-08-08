@@ -778,6 +778,19 @@
 
         if (!currentVersion || !currentVersion.progress) return;
 
+        let hasOQA = currentVersion.progress.some(p => p.team_name === 'OQA');
+        if (!hasOQA) {
+            currentVersion.progress.push({
+                id: 'new-oqa-' + Date.now(),
+                step_order: currentVersion.progress.length + 1,
+                team_name: 'OQA',
+                status: 'Waiting',
+                action_by: '',
+                action_at: '',
+                comment: ''
+            });
+        }
+
         currentVersion.progress.forEach((p, idx) => {
             const tr = document.createElement('tr');
             let statusText = p.status === 'Waiting' ? 'Pending' : p.status;
