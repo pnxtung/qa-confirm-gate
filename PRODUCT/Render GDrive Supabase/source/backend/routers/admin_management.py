@@ -194,7 +194,7 @@ async def api_admin_lock(request: Request):
         conn.close()
         return {"success": False, "error": f"{row['last_updated_by']} đang chỉnh sửa Admin Management, bạn không thể thao tác vào lúc này."}
         
-    cursor.execute("UPDATE app_config SET config_updated_at = ?, last_updated_by = ? WHERE id = 2", (current_time, user['fullname']))
+    cursor.execute("INSERT OR REPLACE INTO app_config (id, config_updated_at, last_updated_by) VALUES (2, ?, ?)", (current_time, user['fullname']))
     conn.commit()
     conn.close()
     return {"success": True, "locked_at": current_time}

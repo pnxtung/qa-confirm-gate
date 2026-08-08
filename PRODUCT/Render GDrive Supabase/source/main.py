@@ -93,6 +93,10 @@ async def startup_event():
                        ("Admin", "admin@domain.com", "Admin", "ADMINPNX", "adminpnx", "Admin"))
         conn.commit()
 
+    cursor.execute("INSERT OR IGNORE INTO app_config (id, config_updated_at, last_updated_by) VALUES (1, 0, NULL)")
+    cursor.execute("INSERT OR IGNORE INTO app_config (id, config_updated_at, last_updated_by) VALUES (2, 0, NULL)")
+    conn.commit()
+
     cursor.execute("SELECT COUNT(*) FROM teams")
     if cursor.fetchone()[0] == 0:
         cursor.execute("INSERT INTO teams (name, active) VALUES (?, ?)", ("Others", "Yes"))
