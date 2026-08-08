@@ -103,6 +103,11 @@ class StorageAdapter:
 
     @classmethod
     def sync_database(cls, background_tasks=None):
+        if "SUPABASE" in STORAGE_DB_PROVIDERS:
+            from backend.core.supabase_storage import sync_database_to_supabase
+            from backend.core.config import DB_PATH
+            gdrive_worker_queue.enqueue(sync_database_to_supabase, DB_PATH)
+
         if "GDRIVE" in STORAGE_DB_PROVIDERS:
             gdrive_worker_queue.enqueue(sync_database_to_gdrive)
 

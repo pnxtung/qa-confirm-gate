@@ -27,7 +27,12 @@ async def startup_event():
     os.makedirs(MP_READINESS_DATA_PATH, exist_ok=True)
     os.makedirs(V00_TEMPLATES_PATH, exist_ok=True)
 
-    # Tải bản database.db mới nhất từ Google Drive nếu provider là GDRIVE
+    # Tải bản CSDL mới nhất tùy theo Provider được cấu hình
+    if "SUPABASE" in STORAGE_DB_PROVIDERS:
+        from backend.core.supabase_storage import init_supabase_defaults, restore_database_from_supabase
+        init_supabase_defaults()
+        restore_database_from_supabase(DB_PATH)
+
     if "GDRIVE" in STORAGE_DB_PROVIDERS:
         restore_database_from_gdrive()
 
