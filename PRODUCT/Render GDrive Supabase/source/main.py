@@ -33,7 +33,54 @@ async def startup_event():
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
+
+    # Thao tác đảm bảo khởi tạo CSDL cục bộ nếu chưa có
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fullname TEXT, email TEXT, team TEXT, username TEXT UNIQUE, password TEXT, access_role TEXT
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS teams (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, active TEXT DEFAULT 'Yes'
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS models (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, model_type TEXT, customer TEXT, line TEXT,
+            mp1st_date TEXT, mp1st_qty INTEGER, ship1st_date TEXT, ship1st_qty INTEGER, status TEXT DEFAULT 'Active',
+            activate TEXT DEFAULT 'Yes', sort_order INTEGER DEFAULT 0
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS master_checklist (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, team TEXT, level_1 TEXT, level_2 TEXT
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS model_checklist (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, model_id INTEGER, team TEXT, level_1 TEXT, level_2 TEXT, locked_by TEXT, locked_at INTEGER
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS document_versions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, model_checklist_id INTEGER, version_no TEXT, status TEXT DEFAULT 'Draft',
+            is_latest INTEGER DEFAULT 1, content TEXT, reason TEXT, updated_at TEXT, approver_username TEXT, approved_at TEXT, uploader_username TEXT
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS document_files (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, version_id INTEGER, filename TEXT, filepath TEXT, uploaded_at TEXT
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS app_config (
+            id INTEGER PRIMARY KEY, config_updated_at INTEGER, last_updated_by TEXT
+        )
+    """)
+    conn.commit()
+
     cursor.execute("SELECT * FROM users WHERE username = 'ADMINPNX'")
     if not cursor.fetchone():
         cursor.execute("DELETE FROM users WHERE username = 'admin' OR username = 'ADMIN'")
