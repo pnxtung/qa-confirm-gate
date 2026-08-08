@@ -503,8 +503,12 @@
     }
 
     async function handleEditClick() {
-        if (!currentVersion || (currentVersion.status !== 'Draft' && currentVersion.status !== 'Template')) {
-            alert('Cannot edit this version because it is already ' + (currentVersion ? currentVersion.status : 'empty'));
+        if (!currentVersion) {
+            alert('Tài liệu chưa có bản nháp nào. Vui lòng bấm nút "+ New" ở phía trên để tạo phiên bản V01 mới!');
+            return;
+        }
+        if (currentVersion.status !== 'Draft' && currentVersion.status !== 'Template') {
+            alert('Không thể chỉnh sửa phiên bản này vì trạng thái hiện tại là: ' + currentVersion.status);
             return;
         }
         

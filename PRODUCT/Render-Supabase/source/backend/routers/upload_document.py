@@ -194,18 +194,17 @@ def api_get_documents(request: Request, model_checklist_id: int):
             model_name = item['model_name'] or "Template"
             v00_content = StorageAdapter.read_document_html(model_name, item['team'], item['level_1'], item['level_2'], "V00")
             
-            # If V00 content exists, include V00 template entry
-            if v00_content:
-                versions.append({
-                    "id": f"V00_{model_checklist_id}",
-                    "version_no": "V00",
-                    "uploader_username": "Admin",
-                    "uploader_fullname": "System",
-                    "status": "Template",
-                    "content": v00_content,
-                    "progress": [],
-                    "files": []
-                })
+            # Always append V00 template entry
+            versions.append({
+                "id": f"V00_{model_checklist_id}",
+                "version_no": "V00",
+                "uploader_username": "Admin",
+                "uploader_fullname": "System",
+                "status": "Template",
+                "content": v00_content or "",
+                "progress": [],
+                "files": []
+            })
     finally:
         conn.close()
 
