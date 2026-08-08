@@ -9,35 +9,36 @@ templates = Jinja2Templates(directory="frontend/templates")
 
 # Render trang chủ Dashboard
 @router.get("/")
-async def get_dashboard(request: Request):
+def get_dashboard(request: Request):
     user = get_current_user(request)
     if not user:
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
         
     conn = get_db()
-    cursor = conn.cursor()
-    
-    # Ghi nhận lượt truy cập (Access Log)
-    import datetime
-    today = datetime.date.today().isoformat()
-    cursor.execute("INSERT INTO access_logs (access_date, access_count) VALUES (?, 0) ON CONFLICT (access_date) DO NOTHING", (today,))
-    cursor.execute("UPDATE access_logs SET access_count = access_count + 1 WHERE access_date = ?", (today,))
-    conn.commit()
-    
-    cursor.execute("SELECT * FROM models ORDER BY sort_order ASC, id ASC")
-    models = [dict(m) for m in cursor.fetchall()]
-    
-    cursor.execute("SELECT * FROM models WHERE activate = 'Yes' ORDER BY sort_order ASC, id ASC")
-    active_models = [dict(m) for m in cursor.fetchall()]
-    
-    # Tính toán tiến độ % hoàn thành của model
-    stats = get_model_statuses(cursor)
-    for m in models:
-        m['status_percent'] = stats.get(m['id'], "0.0%")
-    for m in active_models:
-        m['status_percent'] = stats.get(m['id'], "0.0%")
+    try:
+        cursor = conn.cursor()
         
-    conn.close()
+        # Ghi nhận lượt truy cập (Access Log)
+        import datetime
+        today = datetime.date.today().isoformat()
+        cursor.execute("INSERT INTO access_logs (access_date, access_count) VALUES (?, 0) ON CONFLICT (access_date) DO NOTHING", (today,))
+        cursor.execute("UPDATE access_logs SET access_count = access_count + 1 WHERE access_date = ?", (today,))
+        conn.commit()
+        
+        cursor.execute("SELECT * FROM models ORDER BY sort_order ASC, id ASC")
+        models = [dict(m) for m in cursor.fetchall()]
+        
+        cursor.execute("SELECT * FROM models WHERE activate = 'Yes' ORDER BY sort_order ASC, id ASC")
+        active_models = [dict(m) for m in cursor.fetchall()]
+        
+        # Tính toán tiến độ % hoàn thành của model
+        stats = get_model_statuses(cursor)
+        for m in models:
+            m['status_percent'] = stats.get(m['id'], "0.0%")
+        for m in active_models:
+            m['status_percent'] = stats.get(m['id'], "0.0%")
+    finally:
+        conn.close()
     
     return templates.TemplateResponse(
         request=request,

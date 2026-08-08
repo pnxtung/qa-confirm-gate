@@ -67,7 +67,7 @@ class PgConnectionWrapper:
 
 
 def get_db():
-    conn = psycopg2.connect(DB_URL)
+    conn = psycopg2.connect(DB_URL, connect_timeout=10)
     return PgConnectionWrapper(conn)
 
 def sanitize_folder_name(name: str) -> str:
