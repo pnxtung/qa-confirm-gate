@@ -269,9 +269,8 @@
                 if (typeof currentVersion !== 'undefined' && currentVersion) {
                     editor.setContent(currentVersion.content || '');
                 }
-                if (typeof isEditingMode !== 'undefined' && isEditingMode) {
-                    editor.mode.set('design');
-                    try { editor.getBody().setAttribute('contenteditable', 'true'); } catch(e){}
+                if (typeof pendingEditMode !== 'undefined' && (pendingEditMode || isEditingMode)) {
+                    applyEditMode();
                 } else {
                     editor.mode.set('readonly');
                 }
@@ -295,6 +294,7 @@
     let versionsData = [];
     let currentVersion = null;
     let isEditingMode = false;
+    let pendingEditMode = false;
     let selectedFileId = null;
     let pendingUploads = [];
     let lockCountdownInterval = null;
@@ -350,8 +350,8 @@
                 select.innerHTML = '<option value="">V01</option>';
                 document.getElementById('main-pic-display').textContent = '';
                 document.getElementById('time-display').textContent = '';
-                if (tinyEditor) tinyEditor.setContent('');
-                if (tinyEditor) tinyEditor.mode.set('readonly');
+                if (tinyEditor && !pendingEditMode && !isEditingMode) tinyEditor.setContent('');
+                if (tinyEditor && !pendingEditMode && !isEditingMode) tinyEditor.mode.set('readonly');
                 document.getElementById('progress-tbody').innerHTML = '';
                 currentVersion = null;
                 ['btn-edit', 'btn-save', 'btn-upload', 'btn-del-version', 'btn-add-attachment', 'btn-del-attachment'].forEach(id => {
@@ -383,8 +383,10 @@
         }
     }
     function loadSelectedVersion() {
-        isEditingMode = false;
-        stopLockCountdown();
+        if (!pendingEditMode) {
+            isEditingMode = false;
+            stopLockCountdown();
+        }
         const select = document.getElementById('version-select');
         let v_id = select.value;
         if (!v_id.startsWith('V00_')) {
@@ -408,8 +410,8 @@
         } else {
             document.getElementById('time-display').textContent = currentVersion.uploaded_at || 'N/A';
         }
-        if (tinyEditor) tinyEditor.setContent(currentVersion.content || '');
-        if (tinyEditor) tinyEditor.mode.set('readonly');
+        if (tinyEditor && !pendingEditMode && !isEditingMode) tinyEditor.setContent(currentVersion.content || '');
+        if (tinyEditor && !pendingEditMode && !isEditingMode) tinyEditor.mode.set('readonly');
         renderProgress();
 
         pendingUploads = [];
@@ -534,6 +536,19 @@
         await loadData(true);
     }
 
+    function applyEditMode() {
+        if (!tinyEditor) return;
+        try {
+            tinyEditor.mode.set('design');
+            if (tinyEditor.getBody()) {
+                tinyEditor.getBody().setAttribute('contenteditable', 'true');
+            }
+            tinyEditor.focus();
+        } catch (e) {
+            console.error("applyEditMode error:", e);
+        }
+    }
+
     async function enableEdit() {
         if (!currentVersion || (currentVersion.status !== 'Draft' && currentVersion.status !== 'Template')) {
             return;
@@ -560,20 +575,11 @@
             btnAddFile.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
         }
 
-        if (tinyEditor) {
-            try {
-                tinyEditor.mode.set('design');
-                if (tinyEditor.getBody()) {
-                    tinyEditor.getBody().setAttribute('contenteditable', 'true');
-                }
-                tinyEditor.focus();
-            } catch (e) {
-                console.error("TinyMCE enable edit error:", e);
-            }
-        }
+        isEditingMode = true;
+        pendingEditMode = true;
+        applyEditMode();
         
         // Also enable the Add Step button if IS_UPLOADER
-        isEditingMode = true;
         updateProgressButtons();
     }
     async function createNewVersion() {
@@ -733,6 +739,7 @@
 
     async function saveVersion() {
         if (await performSave()) {
+            pendingEditMode = false;
             alert('Saved successfully');
             loadData();
         }
@@ -760,6 +767,7 @@
             const res = await fetch('/api/documents/version/' + currentVersion.id + '/submit', { method: 'POST' });
             const data = await res.json();
             if (data.success) {
+                pendingEditMode = false;
                 alert('Submitted successfully!');
                 loadData();
             } else {
