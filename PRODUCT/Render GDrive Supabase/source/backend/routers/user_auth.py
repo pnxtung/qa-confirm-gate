@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from backend.core.database import get_db
 from backend.core.security import create_token
+from backend.core.storage_adapter import StorageAdapter
 import sqlite3
 
 router = APIRouter()

@@ -5,6 +5,7 @@ from typing import List
 import time
 from backend.core.database import get_db, check_pessimistic_admin_lock
 from backend.core.security import get_current_user
+from backend.core.storage_adapter import StorageAdapter
 
 router = APIRouter()
 templates = Jinja2Templates(directory="frontend/templates")
