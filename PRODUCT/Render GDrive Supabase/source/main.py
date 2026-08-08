@@ -8,7 +8,7 @@ from backend.routers.dashboard import router as dashboard_router
 from backend.routers.admin_management import router as admin_management_router
 from backend.routers.model_config import router as model_config_router
 from backend.routers.upload_document import router as upload_document_router
-from backend.core.config import DB_PATH, MP_READINESS_DATA_PATH, V00_TEMPLATES_PATH
+from backend.core.config import DB_PATH, MP_READINESS_DATA_PATH, V00_TEMPLATES_PATH, STORAGE_DB_PROVIDERS
 from backend.core.gdrive_storage import restore_database_from_gdrive
 
 app = FastAPI(title="QA Confirm Gate")
