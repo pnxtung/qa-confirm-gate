@@ -29,7 +29,7 @@ class StorageAdapter:
         s_file = sanitize_folder_name(filename)
 
         if version_name.startswith("V00"):
-            return f"V00_templates/{s_l1}/{s_l2}/{s_file}"
+            return f"V00_templates/{s_team}/{s_l1}/{s_l2}/V00/{s_file}"
         else:
             return f"MP readiness data/{s_model}/{s_team}/{s_l1}/{s_l2}/{s_ver}/{s_file}"
 
@@ -115,6 +115,27 @@ class StorageAdapter:
         except Exception as e:
             logger.error(f"[STORAGE SUPABASE ERROR] Copy failed from {src_storage_path} to {dst_storage_path}: {e}")
             return False
+
+    @classmethod
+    def sync_feedbacks_csv(cls, cursor):
+        """
+        Generates feedbacks.csv from feedbacks table and uploads to Supabase Storage at 'feedbacks/feedbacks.csv'
+        """
+        try:
+            import io, csv
+            cursor.execute("SELECT id, employee_id, timestamp, content FROM feedbacks ORDER BY id ASC")
+            rows = cursor.fetchall()
+            output = io.StringIO()
+            writer = csv.writer(output)
+            writer.writerow(["ID", "Employee ID", "Timestamp", "Content"])
+            for r in rows:
+                ts_str = str(r['timestamp']) if r['timestamp'] else ""
+                writer.writerow([r['id'], r['employee_id'] or "", ts_str, r['content'] or ""])
+            
+            csv_bytes = output.getvalue().encode("utf-8-sig")
+            cls.upload_file_bytes("feedbacks/feedbacks.csv", csv_bytes, content_type="text/csv")
+        except Exception as e:
+            logger.error(f"[STORAGE SUPABASE ERROR] Failed to sync feedbacks.csv: {e}")
 
     @classmethod
     def sync_database(cls, background_tasks=None):

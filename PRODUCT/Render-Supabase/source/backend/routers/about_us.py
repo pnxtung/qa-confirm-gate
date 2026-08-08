@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import datetime
 from backend.core.database import get_db
 from backend.core.security import get_current_user
+from backend.core.storage_adapter import StorageAdapter
 
 router = APIRouter()
 templates = Jinja2Templates(directory="frontend/templates")
@@ -129,6 +130,10 @@ def submit_feedback(request: Request, data: FeedbackSubmitRequest):
         cursor.execute("INSERT INTO feedbacks (employee_id, timestamp, content) VALUES (?, ?, ?)", 
                        (user['username'], now_str, data.content))
         conn.commit()
+        try:
+            StorageAdapter.sync_feedbacks_csv(cursor)
+        except Exception:
+            pass
         return JSONResponse({"status": "success"})
     finally:
         conn.close()
@@ -145,6 +150,10 @@ def delete_feedback(request: Request, feedback_id: int):
             
         cursor.execute("DELETE FROM feedbacks WHERE id = ?", (feedback_id,))
         conn.commit()
+        try:
+            StorageAdapter.sync_feedbacks_csv(cursor)
+        except Exception:
+            pass
         return JSONResponse({"status": "success"})
     finally:
         conn.close()
