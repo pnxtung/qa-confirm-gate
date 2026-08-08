@@ -21,6 +21,14 @@ CREATE TABLE access_logs (
         access_count INTEGER DEFAULT 0
     );
 
+DROP TABLE IF EXISTS feedbacks CASCADE;
+CREATE TABLE feedbacks (
+        id SERIAL PRIMARY KEY,
+        employee_id TEXT,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        content TEXT
+    );
+
 DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE users (
         id SERIAL PRIMARY KEY,
@@ -97,6 +105,7 @@ CREATE TABLE document_files (
             version_id INTEGER,
             filename TEXT,
             filepath TEXT,
+            file_size INTEGER DEFAULT 0,
             uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (version_id) REFERENCES document_versions (id)
         );
