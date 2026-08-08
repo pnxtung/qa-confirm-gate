@@ -179,24 +179,16 @@ def sync_table_to_supabase(table_name: str, records: list) -> bool:
         "Prefer": "resolution=merge-duplicates"
     }
     
-    # 1. Wipe old data in Supabase (Hard Sync)
-    delete_url = url
-    if table_name == "access_logs":
-        delete_url += "?access_date=not.is.null"
-    else:
-        delete_url += "?id=gt.-1"
-    
-    try:
-        requests.delete(delete_url, headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"}, timeout=10)
-    except Exception as e:
-        logger.error(f"[SUPABASE TABLE WIPE ERROR] {table_name}: {e}")
-
-    # 2. Insert new data
     try:
         resp = requests.post(url, headers=headers, json=records, timeout=10)
-        return resp.status_code in (200, 201)
+        if resp.status_code in (200, 201):
+            logger.info(f"[SUPABASE TABLE SYNC OK] {table_name}: {len(records)} rows")
+            return True
+        else:
+            logger.error(f"[SUPABASE TABLE SYNC ERROR] {table_name} ({resp.status_code}): {resp.text}")
+            return False
     except Exception as e:
-        logger.error(f"[SUPABASE TABLE SYNC ERROR] {table_name}: {e}")
+        logger.error(f"[SUPABASE TABLE SYNC EXCEPTION] {table_name}: {e}")
         return False
 
 def fetch_table_from_supabase(table_name: str) -> list:
