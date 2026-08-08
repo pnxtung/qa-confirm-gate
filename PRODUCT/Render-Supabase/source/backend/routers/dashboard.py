@@ -20,7 +20,7 @@ async def get_dashboard(request: Request):
     # Ghi nhận lượt truy cập (Access Log)
     import datetime
     today = datetime.date.today().isoformat()
-    cursor.execute("INSERT OR IGNORE INTO access_logs (access_date, access_count) VALUES (?, 0)", (today,))
+    cursor.execute("INSERT INTO access_logs (access_date, access_count) VALUES (?, 0) ON CONFLICT (access_date) DO NOTHING", (today,))
     cursor.execute("UPDATE access_logs SET access_count = access_count + 1 WHERE access_date = ?", (today,))
     conn.commit()
     
