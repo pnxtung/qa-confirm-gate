@@ -75,3 +75,7 @@ app.include_router(admin_management_router)
 app.include_router(model_config_router)
 app.include_router(upload_document_router)
 app.include_router(about_us_router)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

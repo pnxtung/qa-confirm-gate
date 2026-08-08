@@ -9,11 +9,11 @@ echo ==================================================
 echo.
 
 if exist "%~dp0python_env\python.exe" (
-    "%~dp0python_env\python.exe" -m uvicorn main:app --host 127.0.0.1 --port 8000
+    "%~dp0python_env\python.exe" -m uvicorn main:app --host 0.0.0.0 --port 8000
 ) else if exist "%~dp0python_env\Scripts\python.exe" (
-    "%~dp0python_env\Scripts\python.exe" -m uvicorn main:app --host 127.0.0.1 --port 8000
+    "%~dp0python_env\Scripts\python.exe" -m uvicorn main:app --host 0.0.0.0 --port 8000
 ) else (
-    python -m uvicorn main:app --host 127.0.0.1 --port 8000
+    python -m uvicorn main:app --host 0.0.0.0 --port 8000
 )
 
 if %ERRORLEVEL% NEQ 0 (
