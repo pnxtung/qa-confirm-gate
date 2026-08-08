@@ -333,7 +333,7 @@ async def api_get_model_checklist(request: Request, model_id: int):
             else:
                 item['main_pic'] = latest_v['uploader_username'] or ''
                 
-            if latest_v['status'] in ('Draft', 'Pending', 'Approved', 'Rejected'):
+            if latest_v['status'] in ('Pending', 'Approved', 'Rejected'):
                 if latest_v['status'] != 'Rejected':
                     item['doc_status'] = 'Done'
                 

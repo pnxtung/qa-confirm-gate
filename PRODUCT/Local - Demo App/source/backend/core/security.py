@@ -27,21 +27,15 @@ def verify_token(token: str):
     return None
 
 # Dependency lấy thông tin user hiện tại từ cookie
-def get_current_user(request: Request, cursor=None):
+def get_current_user(request: Request):
     token = request.cookies.get("access_token") or request.cookies.get("auth_token")
     username = verify_token(token)
     if not username:
         return None
     
-    if cursor is None:
-        conn = get_db()
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM users WHERE username = ?", (username,))
-            user = cur.fetchone()
-        finally:
-            conn.close()
-    else:
-        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-        user = cursor.fetchone()
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+    user = cursor.fetchone()
+    conn.close()
     return user

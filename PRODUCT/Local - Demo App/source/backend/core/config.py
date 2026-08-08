@@ -46,7 +46,6 @@ GDRIVE_DB_FILE_ID = os.getenv("GDRIVE_DB_FILE_ID", "")
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 SUPABASE_STORAGE_BUCKET = os.getenv("SUPABASE_STORAGE_BUCKET", "pnx-userdata")
-DB_URL = os.getenv("DATABASE_URL", "postgresql://postgres:qacfpnx123%40@db.tlbdkjboznmtnazhjtxh.supabase.co:5432/postgres")
 
 
 

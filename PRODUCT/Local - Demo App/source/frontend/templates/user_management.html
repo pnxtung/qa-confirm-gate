@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
-    <script src="/static/xlsx.full.min.js"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -86,8 +85,8 @@
                             window.location.reload();
                         }
                     } else if (data && data.success) {
-                        window.isIntentionalReload = true;
                         alert("Lưu dữ liệu thành công!");
+                        window.isIntentionalReload = true;
                         window.location.reload();
                     }
                 } catch(err) {
@@ -156,7 +155,22 @@
             if (!confirm(`Bạn có chắc chắn muốn xóa ${checkedBoxes.length} người dùng đã chọn?`)) return;
             for (const chk of checkedBoxes) {
                 const tr = chk.closest('tr');
-                tr.remove(); // Chỉ cần xóa khỏi HTML, khi bấm Save User sẽ gửi form lên Backend xóa thật (Wipe and Insert)
+                const idInput = tr.querySelector('input[name="user_id"]');
+                const userId = parseInt(idInput.value);
+                if (userId === 0) {
+                    tr.remove();
+                } else {
+                    try {
+                        const res = await fetch(`/admin/delete_user/${userId}`, { method: 'POST' });
+                        if (res.ok) {
+                            tr.remove();
+                        } else {
+                            console.error('Failed to delete user ID:', userId);
+                        }
+                    } catch (err) {
+                        console.error('Error deleting user:', err);
+                    }
+                }
             }
         }
         function addUserRow() {
@@ -164,7 +178,7 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="p-0 border-l-0">
-                    <input type="hidden" name="user_id" value="">
+                    <input type="hidden" name="user_id" value="0">
                     <input type="text" name="fullname" value="" class="excel-input" required>
                 </td>
                 <td class="p-0">
@@ -256,208 +270,6 @@
                 }
             });
         }
-
-        function exportUsersToExcel() {
-            const tbody = document.getElementById('user-table-body');
-            const rows = tbody.querySelectorAll('tr');
-            if (rows.length === 0) {
-                alert('Không có dữ liệu người dùng để xuất Excel.');
-                return;
-            }
-            
-            const data = [
-                ['Full Name', 'Email', 'Team', 'Employee ID', 'Password', 'Access']
-            ];
-
-            rows.forEach(tr => {
-                const fullname = tr.querySelector('input[name="fullname"]')?.value.trim() || '';
-                const email = tr.querySelector('input[name="email"]')?.value.trim() || '';
-                const team = tr.querySelector('select[name="team"]')?.value.trim() || tr.querySelector('input[name="team"]')?.value.trim() || 'Others';
-                const username = tr.querySelector('input[name="username"]')?.value.trim() || '';
-                const password = tr.querySelector('input[name="password"]')?.value.trim() || '';
-                const access = tr.querySelector('select[name="access_role"]')?.value.trim() || 'Viewer';
-
-                if (fullname || username) {
-                    data.push([fullname, email, team, username, password, access]);
-                }
-            });
-
-            const worksheet = XLSX.utils.aoa_to_sheet(data);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
-
-            const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-            XLSX.writeFile(workbook, `Users_List_${today}.xlsx`);
-        }
-
-        function triggerImportExcel() {
-            {% if can_edit_backend %}
-            const isMyLock = {{ 'true' if locked_by == current_user.fullname else 'false' }};
-            if (!isMyLock) {
-                alert("⚠️ Bạn phải nhấn nút 'Start Edit' ở góc trên bên phải trước khi Import và Lưu dữ liệu!");
-                return;
-            }
-            {% endif %}
-            document.getElementById('excel-file-input').click();
-        }
-
-        function importUsersFromExcel(input) {
-            const file = input.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-
-                    if (!jsonData || jsonData.length < 2) {
-                        alert('⚠️ File Excel không có dữ liệu.');
-                        input.value = '';
-                        return;
-                    }
-
-                    const headers = jsonData[0].map(h => String(h || '').trim().toLowerCase());
-                    
-                    const findHeaderIdx = (keywords) => {
-                        return headers.findIndex(h => keywords.some(k => h.includes(k)));
-                    };
-
-                    const fullnameIdx = findHeaderIdx(['full name', 'fullname', 'họ và tên', 'họ tên', 'name', 'tên']);
-                    const emailIdx = findHeaderIdx(['email', 'hộp thư', 'mail']);
-                    const teamIdx = findHeaderIdx(['team', 'phòng ban', 'bộ phận']);
-                    const usernameIdx = findHeaderIdx(['employee id', 'employeeid', 'mã nhân viên', 'ma nv', 'username', 'tên đăng nhập', 'mã nv', 'id']);
-                    const passwordIdx = findHeaderIdx(['password', 'mật khẩu', 'mat khau', 'pass']);
-                    const accessIdx = findHeaderIdx(['access', 'quyền', 'role', 'chức vụ']);
-
-                    if (fullnameIdx === -1 && usernameIdx === -1) {
-                        alert('⚠️ File Excel không đúng định dạng!\nCác cột yêu cầu: Full Name (hoặc Họ tên), Employee ID (hoặc Mã NV), Email, Team, Password, Access');
-                        input.value = '';
-                        return;
-                    }
-
-                    // Check duplicate usernames within the Excel file before rendering
-                    const excelUsernames = new Set();
-                    const duplicateUsernamesInExcel = new Set();
-
-                    for (let i = 1; i < jsonData.length; i++) {
-                        const row = jsonData[i];
-                        if (!row || row.length === 0) continue;
-                        let un = (usernameIdx !== -1 && row[usernameIdx] != null) ? String(row[usernameIdx]).trim() : '';
-                        if (un) {
-                            if (excelUsernames.has(un.toLowerCase())) {
-                                duplicateUsernamesInExcel.add(un);
-                            }
-                            excelUsernames.add(un.toLowerCase());
-                        }
-                    }
-
-                    if (duplicateUsernamesInExcel.size > 0) {
-                        const dups = Array.from(duplicateUsernamesInExcel).join(', ');
-                        alert(`Employee ID already exists: ${dups}\nVui lòng kiểm tra lại file Excel!`);
-                        input.value = '';
-                        return;
-                    }
-
-                    // Collect available teams from team-table-body
-                    const availableTeams = Array.from(document.querySelectorAll('#team-table-body input[name="team_name"]'))
-                        .map(inp => inp.value.trim())
-                        .filter(name => name);
-                    if (!availableTeams.includes('Others')) availableTeams.push('Others');
-
-                    const tbody = document.getElementById('user-table-body');
-                    tbody.innerHTML = ''; // Xóa sạch dữ liệu cũ trên bảng để thay bằng dữ liệu Excel mới
-                    let addedCount = 0;
-
-                    for (let i = 1; i < jsonData.length; i++) {
-                        const row = jsonData[i];
-                        if (!row || row.length === 0) continue;
-
-                        const fullname = (fullnameIdx !== -1 && row[fullnameIdx] != null) ? String(row[fullnameIdx]).trim() : '';
-                        const email = (emailIdx !== -1 && row[emailIdx] != null) ? String(row[emailIdx]).trim() : '';
-                        const teamVal = (teamIdx !== -1 && row[teamIdx] != null) ? String(row[teamIdx]).trim() : 'Others';
-                        let username = (usernameIdx !== -1 && row[usernameIdx] != null) ? String(row[usernameIdx]).trim() : '';
-                        const password = (passwordIdx !== -1 && row[passwordIdx] != null) ? String(row[passwordIdx]).trim() : '123456';
-                        const accessVal = (accessIdx !== -1 && row[accessIdx] != null) ? String(row[accessIdx]).trim() : 'Viewer';
-
-                        if (!fullname && !username && !email) continue;
-
-                        // Auto generate username if empty
-                        if (!username) {
-                            if (email && email.includes('@')) {
-                                username = email.split('@')[0];
-                            } else if (fullname) {
-                                username = fullname.toLowerCase().replace(/[^a-z0-9]/g, '');
-                            } else {
-                                username = 'user_' + i;
-                            }
-                        }
-
-                        // Build team select options
-                        let teamSelectOptions = '';
-                        let teamMatched = false;
-                        availableTeams.forEach(t => {
-                            const isSel = (t.toLowerCase() === teamVal.toLowerCase());
-                            if (isSel) teamMatched = true;
-                            teamSelectOptions += `<option value="${t}" ${isSel ? 'selected' : ''}>${t}</option>`;
-                        });
-                        if (!teamMatched && teamVal) {
-                            teamSelectOptions += `<option value="${teamVal}" selected>${teamVal}</option>`;
-                        }
-
-                        // Build access_role options
-                        const roles = ['Pending', 'Viewer', 'OQA', 'Main PIC', 'Admin'];
-                        let roleOptions = '';
-                        roles.forEach(r => {
-                            roleOptions += `<option value="${r}" ${r.toLowerCase() === accessVal.toLowerCase() ? 'selected' : ''}>${r}</option>`;
-                        });
-
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td class="p-0 border-l-0">
-                                <input type="hidden" name="user_id" value="">
-                                <input type="text" name="fullname" value="${fullname}" class="excel-input">
-                            </td>
-                            <td class="p-0">
-                                <input type="text" name="email" value="${email}" class="excel-input">
-                            </td>
-                            <td class="p-0">
-                                <select name="team" class="excel-input">
-                                    ${teamSelectOptions}
-                                </select>
-                            </td>
-                            <td class="p-0">
-                                <input type="text" name="username" value="${username}" class="excel-input">
-                            </td>
-                            <td class="p-0">
-                                <input type="text" name="password" value="${password}" class="excel-input">
-                            </td>
-                            <td class="p-0">
-                                <select name="access_role" class="excel-input">
-                                    ${roleOptions}
-                                </select>
-                            </td>
-                            <td class="p-0 border-r-0 text-center">
-                                <input type="checkbox" class="w-4 h-4 cursor-pointer user-select-checkbox">
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                        addedCount++;
-                    }
-
-                    alert(`✅ Đã nạp thành công ${addedCount} người dùng từ file Excel.\nNhấn nút "Save User" để lưu vào Cơ sở dữ liệu.`);
-                    input.value = '';
-
-                } catch (err) {
-                    console.error('Error parsing Excel:', err);
-                    alert('⚠️ Đã xảy ra lỗi khi đọc file Excel. Vui lòng kiểm tra lại file.');
-                    input.value = '';
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
     </script>
 </head>
 <body class="h-screen overflow-hidden flex flex-col">
@@ -496,9 +308,9 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     <span>Model Config</span>
                 </a>
-                <a href="/feedback" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-                    <span>About Us</span>
+                    <span>Feedback</span>
                 </a>
                 {% if current_user and current_user.access_role == 'Admin' %}
                 <a href="/admin" class="flex items-center space-x-3 px-4 py-3 bg-[#0a192f] text-white mx-2 rounded-md font-bold">
@@ -617,7 +429,7 @@
                             <tr>
                                 <td class="p-0 border-l-0">
                                     <input type="hidden" name="user_id" value="{{ user.id }}">
-                                    <input type="text" name="fullname" value="{{ user.fullname }}" class="excel-input" {% if not can_edit %}readonly{% endif %}>
+                                    <input type="text" name="fullname" value="{{ user.fullname }}" class="excel-input">
                                 </td>
                                 <td class="p-0">
                                     <input type="email" name="email" value="{{ user.email }}" class="excel-input">
@@ -660,18 +472,9 @@
                 <button type="button" onclick="deleteSelectedUsers()" class="btn-primary shrink-0">
                     - Remove User
                 </button>
-                <input type="file" id="excel-file-input" accept=".xlsx, .xls" class="hidden" onchange="importUsersFromExcel(this)">
-                <div class="ml-auto flex items-center gap-2 shrink-0">
-                    <button type="button" onclick="triggerImportExcel()" class="btn-primary shrink-0">
-                        Import Excel
-                    </button>
-                    <button type="button" onclick="exportUsersToExcel()" class="btn-primary shrink-0">
-                        Export Excel
-                    </button>
-                    <button type="submit" class="btn-primary shrink-0">
-                        Save User
-                    </button>
-                </div>
+                <button type="submit" class="btn-primary shrink-0 ml-auto">
+                    Save User
+                </button>
             </div>
             </div>
         </form>
