@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Request, Form, status
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from backend.core.database import get_db
+from backend.core.database import get_db, IntegrityError
 from backend.core.security import create_token
-import sqlite3
 
 router = APIRouter()
 templates = Jinja2Templates(directory="frontend/templates")
@@ -39,7 +38,7 @@ async def post_register(
         conn.close()
         from backend.core.storage_adapter import StorageAdapter
         StorageAdapter.sync_database()
-    except sqlite3.IntegrityError:
+    except IntegrityError:
         try: conn.close()
         except: pass
         return templates.TemplateResponse(request=request, name="user_register.html", context={"error": "Employee ID already exists."})

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, status, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Request, status, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -7,7 +7,6 @@ import csv
 import datetime
 from backend.core.database import get_db
 from backend.core.security import get_current_user
-from backend.core.storage_adapter import StorageAdapter
 
 router = APIRouter()
 templates = Jinja2Templates(directory="frontend/templates")
@@ -97,7 +96,7 @@ async def get_feedback_data(request: Request):
 
 # Cập nhật About Us
 @router.post("/api/feedback/about")
-async def update_about_us(request: Request, data: AboutUsRequest, background_tasks: BackgroundTasks):
+async def update_about_us(request: Request, data: AboutUsRequest):
     user = get_current_user(request)
     if not user or user['username'] != 'ADMINPNX':
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -108,13 +107,11 @@ async def update_about_us(request: Request, data: AboutUsRequest, background_tas
     conn.commit()
     conn.close()
     
-    StorageAdapter.sync_database(background_tasks)
-    
     return JSONResponse({"status": "success", "message": "Updated successfully"})
 
 # Gửi Feedback
 @router.post("/api/feedback/submit")
-async def submit_feedback(request: Request, data: FeedbackSubmitRequest, background_tasks: BackgroundTasks):
+async def submit_feedback(request: Request, data: FeedbackSubmitRequest):
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -157,13 +154,11 @@ async def submit_feedback(request: Request, data: FeedbackSubmitRequest, backgro
         writer = csv.writer(f)
         writer.writerow([new_id, employee_id, timestamp, data.content])
         
-    StorageAdapter.sync_feedbacks_csv(background_tasks)
-        
     return JSONResponse({"status": "success"})
 
 # Xóa Feedback
 @router.delete("/api/feedback/{feedback_id}")
-async def delete_feedback(request: Request, feedback_id: str, background_tasks: BackgroundTasks):
+async def delete_feedback(request: Request, feedback_id: str):
     user = get_current_user(request)
     if not user or user['username'] != 'ADMINPNX':
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -186,7 +181,5 @@ async def delete_feedback(request: Request, feedback_id: str, background_tasks: 
             writer = csv.writer(f)
             writer.writerow(header)
             writer.writerows(new_data)
-            
-        StorageAdapter.sync_feedbacks_csv(background_tasks)
             
     return JSONResponse({"status": "success"})

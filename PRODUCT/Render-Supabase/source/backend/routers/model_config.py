@@ -42,7 +42,7 @@ async def api_config_lock(request: Request):
         conn.close()
         return {"success": False, "error": f"{row['last_updated_by']} đang chỉnh sửa Model Config, bạn không thể thao tác vào lúc này."}
         
-    cursor.execute("INSERT OR REPLACE INTO app_config (id, config_updated_at, last_updated_by) VALUES (1, ?, ?)", (current_time, user['fullname']))
+    cursor.execute("UPDATE app_config SET config_updated_at = ?, last_updated_by = ? WHERE id = 1", (current_time, user['fullname']))
     conn.commit()
     conn.close()
     return {"success": True, "locked_at": current_time}
@@ -155,8 +155,6 @@ async def api_save_model(request: Request, background_tasks: BackgroundTasks):
         conn.commit()
         cursor.execute("SELECT name FROM models")
         active_models = [r[0] for r in cursor.fetchall() if r[0]]
-        if data.get("name"):
-            StorageAdapter.create_model_folder(data.get("name"), background_tasks)
         StorageAdapter.reconcile_model_folders(active_models, background_tasks)
         StorageAdapter.sync_database(background_tasks)
     except Exception as e:
@@ -182,18 +180,14 @@ async def api_delete_model(request: Request, model_id: int, background_tasks: Ba
     
     cursor.execute("SELECT name FROM models WHERE id=?", (model_id,))
     model_row = cursor.fetchone()
-    model_name = model_row[0] if model_row else None
+    if model_row:
+        model_name = model_row[0]
+        StorageAdapter.delete_model_folder(model_name, background_tasks)
         
     cursor.execute("DELETE FROM document_versions WHERE model_checklist_id IN (SELECT id FROM model_checklist WHERE model_id=?)", (model_id,))
     cursor.execute("DELETE FROM models WHERE id=?", (model_id,))
     cursor.execute("DELETE FROM model_checklist WHERE model_id=?", (model_id,))
     conn.commit()
-
-    if model_name:
-        StorageAdapter.delete_model_folder(model_name, background_tasks)
-    cursor.execute("SELECT name FROM models")
-    active_models = [r[0] for r in cursor.fetchall() if r[0]]
-    StorageAdapter.reconcile_model_folders(active_models, background_tasks)
     StorageAdapter.sync_database(background_tasks)
     conn.close()
     return {"success": True}
@@ -340,7 +334,7 @@ async def api_get_model_checklist(request: Request, model_id: int):
                 item['main_pic'] = latest_v['uploader_username'] or ''
                 
             if latest_v['status'] in ('Draft', 'Pending', 'Approved', 'Rejected'):
-                if latest_v['status'] in ('Pending', 'Approved'):
+                if latest_v['status'] != 'Rejected':
                     item['doc_status'] = 'Done'
                 
                 if latest_v['status'] == 'Approved':
@@ -350,6 +344,10 @@ async def api_get_model_checklist(request: Request, model_id: int):
             
         if user_team and item['team'] == user_team:
             item['role'] = 'Uploader'
+        elif user_team and latest_v:
+            cursor.execute("SELECT id FROM confirmation_progress WHERE version_id = ? AND team_name = ?", (latest_v['id'], user_team))
+            if cursor.fetchone():
+                item['role'] = 'Approver'
                     
     conn.close()
     return items
@@ -384,6 +382,7 @@ async def api_save_checklist_remark(request: Request, item_id: int):
     
     cursor.execute("UPDATE model_checklist SET remark = ?, updated_at = ? WHERE id = ?", (remark, new_updated_at, item_id))
     conn.commit()
+    from backend.core.storage_adapter import StorageAdapter
     StorageAdapter.sync_database()
     conn.close()
     return {"success": True, "updated_at": new_updated_at}
@@ -425,6 +424,7 @@ async def api_add_to_model_checklist(request: Request, model_id: int):
                 path = os.path.join(MP_READINESS_DATA_PATH, s_model, s_team, s_l1, s_l2).replace("\\", "/")
                 os.makedirs(path, exist_ok=True)
         conn.commit()
+        from backend.core.storage_adapter import StorageAdapter
         StorageAdapter.sync_database()
     except Exception as e:
         conn.close()
@@ -452,6 +452,7 @@ async def api_remove_from_model_checklist(request: Request, model_id: int):
     cursor.execute(f"DELETE FROM document_versions WHERE model_checklist_id IN (SELECT id FROM model_checklist WHERE model_id=? AND id IN ({placeholders}))", [model_id] + item_ids)
     cursor.execute(f"DELETE FROM model_checklist WHERE model_id=? AND id IN ({placeholders})", [model_id] + item_ids)
     conn.commit()
+    from backend.core.storage_adapter import StorageAdapter
     StorageAdapter.sync_database()
     conn.close()
     

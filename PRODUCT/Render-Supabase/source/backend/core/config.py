@@ -8,10 +8,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 SECRET_KEY = os.getenv("SECRET_KEY", "default_insecure_secret_key")
 
 # Storage Switches
-raw_db_providers = os.getenv("STORAGE_DB_PROVIDER", "GDRIVE")
+raw_db_providers = os.getenv("STORAGE_DB_PROVIDER", "LOCAL")
 STORAGE_DB_PROVIDERS = [p.strip().upper() for p in raw_db_providers.split(",") if p.strip()]
 
-raw_userdata_providers = os.getenv("STORAGE_USERDATA_PROVIDER", "GDRIVE")
+raw_userdata_providers = os.getenv("STORAGE_USERDATA_PROVIDER", "LOCAL")
 STORAGE_USERDATA_PROVIDERS = [p.strip().upper() for p in raw_userdata_providers.split(",") if p.strip()]
 
 SYNC_MODE = os.getenv("SYNC_MODE", "ASYNC").strip().upper()
@@ -46,6 +46,7 @@ GDRIVE_DB_FILE_ID = os.getenv("GDRIVE_DB_FILE_ID", "")
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 SUPABASE_STORAGE_BUCKET = os.getenv("SUPABASE_STORAGE_BUCKET", "pnx-userdata")
+DB_URL = os.getenv("DATABASE_URL", "postgresql://postgres:qacfpnx123%40@db.tlbdkjboznmtnazhjtxh.supabase.co:5432/postgres")
 
 
 

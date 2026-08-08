@@ -437,23 +437,6 @@
                         tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Chưa có hạng mục nào được add cho Model này.</td></tr>';
                         return;
                     }
-                    // Pre-sort: group items by team (preserving API team order), then level_1, then level_2
-                    const sortTeamOrder = {};
-                    let tIdx = 0;
-                    items.forEach(item => {
-                        if (!(item.team in sortTeamOrder)) {
-                            sortTeamOrder[item.team] = tIdx++;
-                        }
-                    });
-                    items.sort((a, b) => {
-                        if (sortTeamOrder[a.team] !== sortTeamOrder[b.team]) return sortTeamOrder[a.team] - sortTeamOrder[b.team];
-                        if (a.level_1 < b.level_1) return -1;
-                        if (a.level_1 > b.level_1) return 1;
-                        if (a.level_2 < b.level_2) return -1;
-                        if (a.level_2 > b.level_2) return 1;
-                        return (a.id || 0) - (b.id || 0);
-                    });
-
                     const teamCounts = {};
                     const teamLevel1Counts = {};
                     items.forEach(item => {

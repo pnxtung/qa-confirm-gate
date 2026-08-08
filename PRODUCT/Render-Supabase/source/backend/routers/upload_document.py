@@ -384,6 +384,7 @@ async def api_create_version(request: Request, model_checklist_id: int):
                 f.write("")
 
     conn.commit()
+    from backend.core.storage_adapter import StorageAdapter
     StorageAdapter.sync_database()
     conn.close()
     
@@ -419,6 +420,7 @@ async def api_submit_version(request: Request, version_id: int):
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cursor.execute("UPDATE document_versions SET status = 'Pending', uploaded_at = ? WHERE id = ?", (now_str, version_id))
     conn.commit()
+    from backend.core.storage_adapter import StorageAdapter
     StorageAdapter.sync_database()
     conn.close()
     return {"success": True}
@@ -466,6 +468,7 @@ async def api_cancel_upload(request: Request, version_id: int):
         """, (version_id,))
         
         conn.commit()
+        from backend.core.storage_adapter import StorageAdapter
         StorageAdapter.sync_database()
     except Exception as e:
         conn.rollback()
@@ -509,6 +512,7 @@ async def api_delete_version(request: Request, version_id: int):
     cursor.execute("DELETE FROM document_versions WHERE id = ?", (version_id,))
     
     conn.commit()
+    from backend.core.storage_adapter import StorageAdapter
     StorageAdapter.sync_database()
     conn.close()
     
@@ -770,20 +774,7 @@ async def api_upload_files(request: Request, version_id: str, files: List[Upload
         with open(file_path, "wb") as f:
             f.write(content)
             
-        try:
-            from backend.core.config import STORAGE_USERDATA_PROVIDERS
-            from backend.core.gdrive_queue import gdrive_worker_queue
-            rel_path = os.path.relpath(file_path, start=".").replace("\\", "/")
-            
-            if "SUPABASE" in STORAGE_USERDATA_PROVIDERS:
-                from backend.core.supabase_storage import upload_file_to_supabase
-                gdrive_worker_queue.enqueue(upload_file_to_supabase, file_path, rel_path)
-
-            if "GDRIVE" in STORAGE_USERDATA_PROVIDERS:
-                from backend.core.gdrive_storage import upload_file_to_gdrive
-                gdrive_worker_queue.enqueue(upload_file_to_gdrive, file_path, rel_path)
-        except Exception as e:
-            print(f"[STORAGE FILE SYNC ERROR] {e}")
+        # File saved locally to file_path
             
         if not is_v00:
             cursor.execute("""
