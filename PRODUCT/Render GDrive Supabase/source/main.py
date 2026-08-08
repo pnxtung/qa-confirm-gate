@@ -83,6 +83,16 @@ async def startup_event():
                         id INTEGER PRIMARY KEY,
                         about_us TEXT
                     )''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS confirmation_progress (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        version_id INTEGER,
+                        step_order INTEGER,
+                        team_name TEXT,
+                        status TEXT DEFAULT 'Waiting',
+                        comment TEXT,
+                        action_by TEXT,
+                        action_at TEXT
+                    )''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS access_logs (
                         access_date TEXT PRIMARY KEY,
                         access_count INTEGER DEFAULT 0
