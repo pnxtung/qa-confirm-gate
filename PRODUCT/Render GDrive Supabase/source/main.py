@@ -28,15 +28,6 @@ async def startup_event():
     os.makedirs(MP_READINESS_DATA_PATH, exist_ok=True)
     os.makedirs(V00_TEMPLATES_PATH, exist_ok=True)
 
-    # Tải bản CSDL mới nhất tùy theo Provider được cấu hình
-    if "SUPABASE" in STORAGE_DB_PROVIDERS:
-        from backend.core.supabase_storage import init_supabase_defaults, restore_database_from_supabase
-        init_supabase_defaults()
-        restore_database_from_supabase(DB_PATH)
-
-    if "GDRIVE" in STORAGE_DB_PROVIDERS:
-        restore_database_from_gdrive()
-
     from backend.core.storage_adapter import StorageAdapter
     StorageAdapter.restore_feedbacks_csv()
 
@@ -98,7 +89,20 @@ async def startup_event():
                     )''')
     cursor.execute("INSERT OR IGNORE INTO site_content (id, about_us) VALUES (1, '')")
     conn.commit()
+    conn.close()  # Đóng connection trước khi restore
 
+    # === RESTORE từ Cloud (SAU KHI đã tạo bảng SQLite) ===
+    if "SUPABASE" in STORAGE_DB_PROVIDERS:
+        from backend.core.supabase_storage import init_supabase_defaults, restore_database_from_supabase
+        init_supabase_defaults()
+        restore_database_from_supabase(DB_PATH)
+
+    if "GDRIVE" in STORAGE_DB_PROVIDERS:
+        restore_database_from_gdrive()
+
+    # Mở lại connection sau restore
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE username = 'ADMINPNX'")
     if not cursor.fetchone():
         cursor.execute("DELETE FROM users WHERE username = 'admin' OR username = 'ADMIN'")
