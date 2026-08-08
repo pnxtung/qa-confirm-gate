@@ -25,8 +25,8 @@ async def get_dashboard(request: Request, background_tasks: BackgroundTasks):
     cursor.execute("UPDATE access_logs SET access_count = access_count + 1 WHERE access_date = ?", (today,))
     conn.commit()
     
-    # Đồng bộ lên Cloud
-    StorageAdapter.sync_database(background_tasks)
+    # Đồng bộ lên Cloud (Đã tắt trên trang chủ để tránh Ghi đè quá nhiều)
+    # StorageAdapter.sync_database(background_tasks)
     
     cursor.execute("SELECT * FROM models ORDER BY sort_order ASC, id ASC")
     models = [dict(m) for m in cursor.fetchall()]
