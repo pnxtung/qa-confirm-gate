@@ -21,21 +21,37 @@ templates = Jinja2Templates(directory="frontend/templates")
 MAX_VERSION_SIZE_BYTES = 40 * 1024 * 1024  # 40 MB
 
 def get_version_total_size(version_id: str, new_html_content: str = None, new_files_bytes: int = 0) -> int:
-    total = new_files_bytes
-    if new_html_content is not None:
-        total += len(new_html_content.encode('utf-8'))
-        
-    if not version_id.startswith("V00_"):
+    if version_id.startswith("V00_"):
+        model_checklist_id = int(version_id.split("_")[1])
         conn = get_db()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("SELECT SUM(file_size) FROM document_files WHERE version_id = ?", (int(version_id),))
-            row = cursor.fetchone()
-            if row and row[0]:
-                total += row[0]
-        finally:
-            conn.close()
-            
+        cursor = conn.cursor()
+        cursor.execute("SELECT team, level_1, level_2 FROM model_checklist WHERE id = ?", (model_checklist_id,))
+        item = cursor.fetchone()
+        conn.close()
+        if not item:
+            return new_files_bytes
+        s_team = "".join(c if c.isalnum() else "_" for c in item['team'])
+        s_l1 = "".join(c if c.isalnum() else "_" for c in item['level_1'])
+        s_l2 = "".join(c if c.isalnum() else "_" for c in item['level_2'])
+        v_dir = os.path.join(V00_TEMPLATES_PATH, s_team, s_l1, s_l2, "V00").replace("\\", "/")
+    else:
+        v_dir = get_version_dir(int(version_id))
+
+    if not v_dir or not os.path.exists(v_dir):
+        return new_files_bytes
+
+    total = new_files_bytes
+    for fn in os.listdir(v_dir):
+        fp = os.path.join(v_dir, fn)
+        if os.path.isfile(fp):
+            if fn == "content.html" and new_html_content is not None:
+                total += len(new_html_content.encode('utf-8'))
+            else:
+                total += os.path.getsize(fp)
+
+    if new_html_content is not None and not os.path.exists(os.path.join(v_dir, "content.html")):
+        total += len(new_html_content.encode('utf-8'))
+
     return total
 
 # Render giao diện trang Upload
@@ -152,63 +168,83 @@ async def get_upload(request: Request, model_checklist_id: int):
     conn.close()
     return response
 
+# Tải lịch sử tất cả Versions của một hạng mục
 @router.get("/api/documents/{model_checklist_id}")
-def api_get_documents(request: Request, model_checklist_id: int):
+async def api_get_documents(request: Request, model_checklist_id: int):
     conn = get_db()
-    try:
-        cursor = conn.cursor()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT dv.*, u.fullname as uploader_fullname, u.team as uploader_team 
+        FROM document_versions dv 
+        LEFT JOIN users u ON dv.uploader_username = u.username 
+        WHERE dv.model_checklist_id = ? 
+        ORDER BY dv.id DESC
+    """, (model_checklist_id,))
+    versions = [dict(v) for v in cursor.fetchall()]
+    
+    for v in versions:
+        v_dir = get_version_dir(v['id'])
+        content_path = os.path.join(v_dir, "content.html") if v_dir else ""
+        if os.path.exists(content_path):
+            with open(content_path, "r", encoding="utf-8") as f:
+                v['content'] = f.read()
+                
+        cursor.execute("SELECT * FROM confirmation_progress WHERE version_id = ? ORDER BY step_order ASC", (v['id'],))
+        v['progress'] = [dict(p) for p in cursor.fetchall()]
         
-        cursor.execute("""
-            SELECT dv.*, u.fullname as uploader_fullname, u.team as uploader_team,
-                   mc.team, mc.level_1, mc.level_2, m.name as model_name
-            FROM document_versions dv 
-            LEFT JOIN users u ON dv.uploader_username = u.username 
-            JOIN model_checklist mc ON dv.model_checklist_id = mc.id
-            LEFT JOIN models m ON mc.model_id = m.id
-            WHERE dv.model_checklist_id = ? 
-            ORDER BY dv.id DESC
-        """, (model_checklist_id,))
-        versions = [dict(v) for v in cursor.fetchall()]
+        cursor.execute("SELECT * FROM document_files WHERE version_id = ? ORDER BY id ASC", (v['id'],))
+        db_files = [dict(f) for f in cursor.fetchall()]
+        for f in db_files:
+            fp = f.get('filepath')
+            if fp and os.path.exists(fp):
+                f['size'] = os.path.getsize(fp)
+            else:
+                f['size'] = 0
+        v['files'] = db_files
         
-        for v in versions:
-            model_name = v.get('model_name') or "Unknown"
-            v['content'] = StorageAdapter.read_document_html(model_name, v['team'], v['level_1'], v['level_2'], v['version_no'])
-                    
-            cursor.execute("SELECT * FROM confirmation_progress WHERE version_id = ? ORDER BY step_order ASC", (v['id'],))
-            v['progress'] = [dict(p) for p in cursor.fetchall()]
+    cursor.execute("""
+        SELECT mc.team, mc.level_1, mc.level_2 
+        FROM model_checklist mc
+        WHERE mc.id = ?
+    """, (model_checklist_id,))
+    item = cursor.fetchone()
+    if item:
+        s_team = "".join(c if c.isalnum() else "_" for c in item['team'])
+        s_l1 = "".join(c if c.isalnum() else "_" for c in item['level_1'])
+        s_l2 = "".join(c if c.isalnum() else "_" for c in item['level_2'])
+        v00_dir = os.path.join(V00_TEMPLATES_PATH, s_team, s_l1, s_l2, "V00").replace("\\", "/")
+        
+        if os.path.exists(v00_dir):
+            v00_content = ""
+            content_path = os.path.join(v00_dir, "content.html")
+            if os.path.exists(content_path):
+                with open(content_path, "r", encoding="utf-8") as f:
+                    v00_content = f.read()
             
-            cursor.execute("SELECT * FROM document_files WHERE version_id = ? ORDER BY id ASC", (v['id'],))
-            db_files = [dict(f) for f in cursor.fetchall()]
-            for f in db_files:
-                f['size'] = f.get('file_size') or 0
-            v['files'] = db_files
-            
-        cursor.execute("""
-            SELECT mc.team, mc.level_1, mc.level_2, m.name as model_name
-            FROM model_checklist mc
-            LEFT JOIN models m ON mc.model_id = m.id
-            WHERE mc.id = ?
-        """, (model_checklist_id,))
-        item = cursor.fetchone()
-        if item:
-            model_name = item['model_name'] or "Template"
-            v00_content = StorageAdapter.read_document_html(model_name, item['team'], item['level_1'], item['level_2'], "V00")
-            
-            # If V00 content exists, include V00 template entry
-            if v00_content:
-                versions.append({
-                    "id": f"V00_{model_checklist_id}",
-                    "version_no": "V00",
-                    "uploader_username": "Admin",
-                    "uploader_fullname": "System",
-                    "status": "Template",
-                    "content": v00_content,
-                    "progress": [],
-                    "files": []
-                })
-    finally:
-        conn.close()
+            v00_files = []
+            for fname in os.listdir(v00_dir):
+                if fname != "content.html":
+                    fp = os.path.join(v00_dir, fname)
+                    v00_files.append({
+                        "id": f"V00_{model_checklist_id}_{fname}",
+                        "filename": fname,
+                        "file_path": fp,
+                        "size": os.path.getsize(fp) if os.path.isfile(fp) else 0
+                    })
 
+            versions.append({
+                "id": f"V00_{model_checklist_id}",
+                "version_no": "V00",
+                "uploader_username": "Admin",
+                "uploader_fullname": "System",
+                "status": "Template",
+                "content": v00_content,
+                "progress": [],
+                "files": v00_files
+            })
+            
+    conn.close()
     return JSONResponse(
         content=versions,
         headers={
@@ -269,90 +305,90 @@ async def api_unlock_document(request: Request, checklist_id: int):
     conn.close()
     return {"success": True}
 
+# Tạo Version Nháp mới (Clone từ bản cũ hoặc V00)
 @router.post("/api/documents/{model_checklist_id}/version")
-def api_create_version(request: Request, model_checklist_id: int):
+async def api_create_version(request: Request, model_checklist_id: int):
+    user = get_current_user(request)
+    if not user:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+        
     conn = get_db()
-    try:
-        cursor = conn.cursor()
-        user = get_current_user(request, cursor=cursor)
-        if not user:
-            return Response(status_code=status.HTTP_403_FORBIDDEN)
-            
-        lock_err = check_pessimistic_lock(cursor, model_checklist_id, user)
-        if lock_err:
-            return {"success": False, "error": lock_err}
-        
-        cursor.execute("SELECT count(id) FROM document_versions WHERE model_checklist_id = ?", (model_checklist_id,))
-        count = cursor.fetchone()[0]
-        next_ver = f"V{count + 1:02d}"
-        
-        cursor.execute("""
-            SELECT dv.id, dv.version_no, mc.team, mc.level_1, mc.level_2, m.name as model_name
-            FROM document_versions dv
-            JOIN model_checklist mc ON dv.model_checklist_id = mc.id
-            LEFT JOIN models m ON mc.model_id = m.id
-            WHERE dv.model_checklist_id = ? 
-            ORDER BY dv.id DESC LIMIT 1
-        """, (model_checklist_id,))
-        latest_v = cursor.fetchone()
-        
-        if not latest_v:
-            cursor.execute("""
-                SELECT mc.team, mc.level_1, mc.level_2, m.name as model_name
-                FROM model_checklist mc
-                LEFT JOIN models m ON mc.model_id = m.id
-                WHERE mc.id = ?
-            """, (model_checklist_id,))
-            meta_item = cursor.fetchone()
-            model_name = meta_item['model_name'] if meta_item else "Unknown"
-            team = meta_item['team'] if meta_item else "Unknown"
-            level_1 = meta_item['level_1'] if meta_item else "Unknown"
-            level_2 = meta_item['level_2'] if meta_item else "Unknown"
-        else:
-            model_name = latest_v['model_name'] or "Unknown"
-            team = latest_v['team']
-            level_1 = latest_v['level_1']
-            level_2 = latest_v['level_2']
-        
-        cursor.execute("""
-            INSERT INTO document_versions (model_checklist_id, version_no, content, uploader_username, status) 
-            VALUES (?, ?, ?, ?, 'Draft')
-        """, (model_checklist_id, next_ver, "", user["username"]))
-        new_version_id = cursor.lastrowid
-        
-        cursor.execute("""
-            INSERT INTO confirmation_progress (version_id, step_order, team_name) 
-            VALUES (?, ?, 'OQA')
-        """, (new_version_id, 1))
-        
-        if latest_v:
-            latest_version_id = latest_v["id"]
-            cursor.execute("SELECT filename, filepath, file_size FROM document_files WHERE version_id = ?", (latest_version_id,))
-            files_to_copy = cursor.fetchall()
-            for f in files_to_copy:
-                old_filepath = f["filepath"]
-                new_filepath = StorageAdapter.get_supabase_file_path(model_name, team, level_1, level_2, next_ver, f["filename"])
-                if old_filepath:
-                    StorageAdapter.copy_file(old_filepath, new_filepath)
-                cursor.execute("""
-                    INSERT INTO document_files (version_id, filename, filepath, file_size, uploaded_at)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (new_version_id, f["filename"], new_filepath, f.get("file_size", 0), datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-            
-            # Copy content.html
-            old_html_path = StorageAdapter.get_supabase_html_path(model_name, team, level_1, level_2, latest_v["version_no"])
-            new_html_path = StorageAdapter.get_supabase_html_path(model_name, team, level_1, level_2, next_ver)
-            StorageAdapter.copy_file(old_html_path, new_html_path)
-        else:
-            # Copy V00 content.html if exists
-            v00_html_path = StorageAdapter.get_supabase_html_path(model_name, team, level_1, level_2, "V00")
-            new_html_path = StorageAdapter.get_supabase_html_path(model_name, team, level_1, level_2, next_ver)
-            StorageAdapter.copy_file(v00_html_path, new_html_path)
-
-        conn.commit()
-        return {"success": True, "version_id": new_version_id, "version_no": next_ver}
-    finally:
+    cursor = conn.cursor()
+    lock_err = check_pessimistic_lock(cursor, model_checklist_id, user)
+    if lock_err:
         conn.close()
+        return {"success": False, "error": lock_err}
+    
+    cursor.execute("SELECT count(id) FROM document_versions WHERE model_checklist_id = ?", (model_checklist_id,))
+    count = cursor.fetchone()[0]
+    next_ver = f"V{count + 1:02d}"
+    
+    cursor.execute("SELECT id FROM document_versions WHERE model_checklist_id = ? ORDER BY id DESC LIMIT 1", (model_checklist_id,))
+    latest_v = cursor.fetchone()
+    
+    cursor.execute("""
+        INSERT INTO document_versions (model_checklist_id, version_no, content, uploader_username, status) 
+        VALUES (?, ?, ?, ?, 'Draft')
+    """, (model_checklist_id, next_ver, "", user["username"]))
+    new_version_id = cursor.lastrowid
+    
+    cursor.execute("""
+        INSERT INTO confirmation_progress (version_id, step_order, team_name) 
+        VALUES (?, ?, 'OQA')
+    """, (new_version_id, 1))
+    
+    dest_dir = get_version_dir_from_checklist(model_checklist_id, next_ver)
+    
+    if latest_v:
+        latest_version_id = latest_v["id"]
+        src_dir = get_version_dir(latest_version_id)
+        
+        if src_dir and os.path.exists(src_dir):
+            shutil.copytree(src_dir, dest_dir, dirs_exist_ok=True)
+                    
+        cursor.execute("SELECT filename, filepath FROM document_files WHERE version_id = ?", (latest_version_id,))
+        files_to_copy = cursor.fetchall()
+        for f in files_to_copy:
+            old_filepath = f["filepath"]
+            if src_dir and dest_dir:
+                new_filepath = old_filepath.replace(src_dir, dest_dir)
+            else:
+                new_filepath = old_filepath
+            cursor.execute("""
+                INSERT INTO document_files (version_id, filename, filepath, uploaded_at)
+                VALUES (?, ?, ?, ?)
+            """, (new_version_id, f["filename"], new_filepath, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+    else:
+        cursor.execute("SELECT team, level_1, level_2 FROM model_checklist WHERE id = ?", (model_checklist_id,))
+        item = cursor.fetchone()
+        cloned_from_v00 = False
+        if item:
+            s_team = "".join(c if c.isalnum() else "_" for c in item['team'])
+            s_l1 = "".join(c if c.isalnum() else "_" for c in item['level_1'])
+            s_l2 = "".join(c if c.isalnum() else "_" for c in item['level_2'])
+            v00_dir = os.path.join(V00_TEMPLATES_PATH, s_team, s_l1, s_l2, "V00").replace("\\", "/")
+            if os.path.exists(v00_dir):
+                shutil.copytree(v00_dir, dest_dir, dirs_exist_ok=True)
+                for fname in os.listdir(v00_dir):
+                    if fname != "content.html":
+                        new_filepath = os.path.join(dest_dir, fname)
+                        cursor.execute("""
+                            INSERT INTO document_files (version_id, filename, filepath, uploaded_at)
+                            VALUES (?, ?, ?, ?)
+                        """, (new_version_id, fname, new_filepath, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                cloned_from_v00 = True
+                
+        if not cloned_from_v00:
+            os.makedirs(dest_dir, exist_ok=True)
+            with open(os.path.join(dest_dir, "content.html"), "w", encoding="utf-8") as f:
+                f.write("")
+
+    conn.commit()
+    from backend.core.storage_adapter import StorageAdapter
+    StorageAdapter.sync_database()
+    conn.close()
+    
+    return {"success": True, "version_id": new_version_id, "version_no": next_ver}
 
 # Chuyển trạng thái từ Nháp sang Pending (Hoàn thành Upload)
 @router.post("/api/documents/version/{version_id}/submit")
@@ -671,170 +707,165 @@ async def api_save_content(request: Request, version_id: str, background_tasks: 
 # Upload files đính kèm
 @router.post("/api/documents/version/{version_id}/files")
 async def api_upload_files(request: Request, version_id: str, files: List[UploadFile] = File(...)):
+    user = get_current_user(request)
+    if not user:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+        
     conn = get_db()
-    try:
-        cursor = conn.cursor()
-        user = get_current_user(request, cursor=cursor)
-        if not user:
-            return Response(status_code=status.HTTP_403_FORBIDDEN)
-            
-        is_v00 = version_id.startswith("V00_")
-        if is_v00:
-            if user["access_role"] != "Admin" and user["team"] != "Process DEV":
-                return Response(status_code=status.HTTP_403_FORBIDDEN)
-            model_checklist_id = int(version_id.split("_")[1])
-            version_id_int = None
-            version_no = "V00"
-            cursor.execute("""
-                SELECT mc.team, mc.level_1, mc.level_2, m.name as model_name
-                FROM model_checklist mc
-                LEFT JOIN models m ON mc.model_id = m.id
-                WHERE mc.id = ?
-            """, (model_checklist_id,))
-            v_row = cursor.fetchone()
-            if not v_row:
-                return Response(status_code=404)
-            model_name = v_row['model_name'] or "Template"
-            team = v_row['team']
-            level_1 = v_row['level_1']
-            level_2 = v_row['level_2']
-            checklist_id = model_checklist_id
-        else:
-            version_id_int = int(version_id)
-            cursor.execute("""
-                SELECT dv.model_checklist_id, dv.version_no, mc.team, mc.level_1, mc.level_2, m.name as model_name
-                FROM document_versions dv
-                JOIN model_checklist mc ON dv.model_checklist_id = mc.id
-                LEFT JOIN models m ON mc.model_id = m.id
-                WHERE dv.id = ?
-            """, (version_id_int,))
-            v_row = cursor.fetchone()
-            if not v_row:
-                return Response(status_code=404)
-            checklist_id = v_row['model_checklist_id']
-            version_no = v_row['version_no']
-            model_name = v_row['model_name'] or "Unknown"
-            team = v_row['team']
-            level_1 = v_row['level_1']
-            level_2 = v_row['level_2']
+    cursor = conn.cursor()
+    if version_id.startswith("V00_"):
+        checklist_id = int(version_id.split("_")[1])
+    else:
+        cursor.execute("SELECT model_checklist_id FROM document_versions WHERE id = ?", (int(version_id),))
+        row = cursor.fetchone()
+        checklist_id = row[0] if row else None
 
-        if checklist_id:
-            lock_err = check_pessimistic_lock(cursor, checklist_id, user)
-            if lock_err:
-                return {"success": False, "error": lock_err}
-        
-        # Calculate new files size and validate total version size
-        new_files_bytes = 0
-        file_contents = []
-        for file in files:
-            file_content = await file.read()
-            file_contents.append(file_content)
-            new_files_bytes += len(file_content)
+    if checklist_id:
+        lock_err = check_pessimistic_lock(cursor, checklist_id, user)
+        if lock_err:
+            conn.close()
+            return {"success": False, "error": lock_err}
+    
+    # Calculate new files size and validate total version size
+    new_files_bytes = 0
+    for file in files:
+        file_content = await file.read()
+        await file.seek(0)
+        new_files_bytes += len(file_content)
 
-        total_size = get_version_total_size(version_id, new_files_bytes=new_files_bytes)
-        if total_size > MAX_VERSION_SIZE_BYTES:
-            return {"success": False, "error": "Không thể lưu do tổng dung lượng version vượt quá 40MB!"}
-        
-        uploaded_records = []
-        for file, content in zip(files, file_contents):
-            safe_filename = sanitize_folder_name(file.filename)
-            file_size = len(content)
-            
-            storage_path = StorageAdapter.get_supabase_file_path(model_name, team, level_1, level_2, version_no, safe_filename)
-            StorageAdapter.upload_file_bytes(storage_path, content, content_type=file.content_type or "application/octet-stream")
-                
-            if not is_v00:
-                cursor.execute("""
-                    INSERT INTO document_files (version_id, filename, filepath, file_size, uploaded_at)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (version_id_int, safe_filename, storage_path, file_size, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-                uploaded_records.append({
-                    "id": cursor.lastrowid,
-                    "filename": safe_filename,
-                    "filepath": storage_path,
-                    "file_size": file_size
-                })
-            else:
-                uploaded_records.append({
-                    "id": f"V00_{model_checklist_id}_{safe_filename}",
-                    "filename": safe_filename,
-                    "file_path": storage_path,
-                    "file_size": file_size
-                })
-                
-        conn.commit()
-        return {"success": True, "files": uploaded_records}
-    finally:
+    total_size = get_version_total_size(version_id, new_files_bytes=new_files_bytes)
+    if total_size > MAX_VERSION_SIZE_BYTES:
         conn.close()
+        return {"success": False, "error": "Không thể lưu do tổng dung lượng version vượt quá 40MB!"}
+    
+    is_v00 = version_id.startswith("V00_")
+    if is_v00:
+        if user["access_role"] != "Admin" and user["team"] != "Process DEV":
+            conn.close()
+            return Response(status_code=status.HTTP_403_FORBIDDEN)
+        
+        model_checklist_id = int(version_id.split("_")[1])
+        cursor.execute("SELECT team, level_1, level_2 FROM model_checklist WHERE id = ?", (model_checklist_id,))
+        item = cursor.fetchone()
+        if not item:
+            conn.close()
+            return Response(status_code=404)
+        s_team = "".join(c if c.isalnum() else "_" for c in item['team'])
+        s_l1 = "".join(c if c.isalnum() else "_" for c in item['level_1'])
+        s_l2 = "".join(c if c.isalnum() else "_" for c in item['level_2'])
+        v_dir = os.path.join(V00_TEMPLATES_PATH, s_team, s_l1, s_l2, "V00").replace("\\", "/")
+    else:
+        version_id_int = int(version_id)
+        v_dir = get_version_dir(version_id_int)
+        
+    if not v_dir:
+        conn.close()
+        return Response(status_code=404)
+        
+    os.makedirs(v_dir, exist_ok=True)
+    
+    uploaded_records = []
+    
+    for file in files:
+        safe_filename = sanitize_folder_name(file.filename)
+        file_path = os.path.join(v_dir, safe_filename)
+        
+        content = await file.read()
+        with open(file_path, "wb") as f:
+            f.write(content)
+            
+        # File saved locally to file_path
+            
+        if not is_v00:
+            cursor.execute("""
+                INSERT INTO document_files (version_id, filename, filepath, uploaded_at)
+                VALUES (?, ?, ?, ?)
+            """, (version_id_int, safe_filename, file_path, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            uploaded_records.append({
+                "id": cursor.lastrowid,
+                "filename": safe_filename,
+                "filepath": file_path
+            })
+        else:
+            uploaded_records.append({
+                "id": f"V00_{model_checklist_id}_{safe_filename}",
+                "filename": safe_filename,
+                "file_path": file_path
+            })
+            
+    conn.commit()
+    conn.close()
+    
+    return {"success": True, "files": uploaded_records}
 
 # Xóa 1 File đính kèm
 @router.delete("/api/documents/version/files/{file_id}")
-def api_delete_file(request: Request, file_id: str):
+async def api_delete_file(request: Request, file_id: str):
+    user = get_current_user(request)
+    if not user:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+        
     conn = get_db()
-    try:
-        cursor = conn.cursor()
-        user = get_current_user(request, cursor=cursor)
-        if not user:
+    cursor = conn.cursor()
+    cursor.execute("SELECT version_id FROM document_files WHERE id = ?", (file_id,))
+    f_row = cursor.fetchone()
+    if f_row:
+        v_id = f_row[0]
+        cursor.execute("SELECT model_checklist_id FROM document_versions WHERE id = ?", (v_id,))
+        v_row = cursor.fetchone()
+        if v_row:
+            lock_err = check_pessimistic_lock(cursor, v_row[0], user)
+            if lock_err:
+                conn.close()
+                return {"success": False, "error": lock_err}
+    
+    if file_id.startswith("V00_"):
+        if user["access_role"] != "Admin" and user["team"] != "Process DEV":
+            conn.close()
             return Response(status_code=status.HTTP_403_FORBIDDEN)
             
-        if file_id.startswith("V00_"):
-            if user["access_role"] != "Admin" and user["team"] != "Process DEV":
-                return Response(status_code=status.HTTP_403_FORBIDDEN)
-                
-            parts = file_id.split("_", 2)
-            if len(parts) == 3:
-                model_checklist_id = int(parts[1])
-                filename = parts[2]
-                cursor.execute("""
-                    SELECT mc.team, mc.level_1, mc.level_2, m.name as model_name 
-                    FROM model_checklist mc 
-                    LEFT JOIN models m ON mc.model_id = m.id
-                    WHERE mc.id = ?
-                """, (model_checklist_id,))
-                item = cursor.fetchone()
-                if item:
-                    model_name = item['model_name'] or "Template"
-                    storage_path = StorageAdapter.get_supabase_file_path(model_name, item['team'], item['level_1'], item['level_2'], "V00", filename)
-                    StorageAdapter.delete_file(storage_path)
-            return {"success": True}
-
-        file_id_int = int(file_id)
-        cursor.execute("SELECT filepath FROM document_files WHERE id = ?", (file_id_int,))
-        f = cursor.fetchone()
-        if not f:
-            return Response(status_code=404)
-            
-        if f["filepath"]:
-            StorageAdapter.delete_file(f["filepath"])
-            
-        cursor.execute("DELETE FROM document_files WHERE id = ?", (file_id_int,))
-        conn.commit()
-        return {"success": True}
-    finally:
+        parts = file_id.split("_", 2)
+        if len(parts) == 3:
+            model_checklist_id = int(parts[1])
+            filename = parts[2]
+            cursor.execute("SELECT team, level_1, level_2 FROM model_checklist WHERE id = ?", (model_checklist_id,))
+            item = cursor.fetchone()
+            if item:
+                s_team = "".join(c if c.isalnum() else "_" for c in item['team'])
+                s_l1 = "".join(c if c.isalnum() else "_" for c in item['level_1'])
+                s_l2 = "".join(c if c.isalnum() else "_" for c in item['level_2'])
+                filepath = os.path.join(V00_TEMPLATES_PATH, s_team, s_l1, s_l2, "V00", filename).replace("\\", "/")
+                if os.path.exists(filepath):
+                    os.remove(filepath)
         conn.close()
+        return {"success": True}
+
+    file_id_int = int(file_id)
+    cursor.execute("SELECT filepath FROM document_files WHERE id = ?", (file_id_int,))
+    f = cursor.fetchone()
+    if not f:
+        conn.close()
+        return Response(status_code=404)
+        
+    cursor.execute("DELETE FROM document_files WHERE id = ?", (file_id_int,))
+    conn.commit()
+    conn.close()
+    
+    if os.path.exists(f["filepath"]):
+        os.remove(f["filepath"])
+        
+    return {"success": True}
 
 # Hỗ trợ Client Download file
 @router.get("/api/documents/version/files/{file_id}/download")
-def api_download_file(request: Request, file_id: int):
+async def api_download_file(request: Request, file_id: int):
     conn = get_db()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT filepath, filename FROM document_files WHERE id = ?", (file_id,))
-        f = cursor.fetchone()
-    finally:
-        conn.close()
-        
-    if not f or not f["filepath"]:
+    cursor = conn.cursor()
+    cursor.execute("SELECT filepath, filename FROM document_files WHERE id = ?", (file_id,))
+    f = cursor.fetchone()
+    conn.close()
+    
+    if not f or not os.path.exists(f["filepath"]):
         return Response(status_code=404)
         
-    file_bytes = StorageAdapter.download_file_bytes(f["filepath"])
-    if not file_bytes:
-        return Response(status_code=404)
-        
-    from fastapi.responses import StreamingResponse
-    import io
-    return StreamingResponse(
-        io.BytesIO(file_bytes),
-        media_type="application/octet-stream",
-        headers={"Content-Disposition": f'attachment; filename="{f["filename"]}"'}
-    )
+    return FileResponse(f["filepath"], filename=f["filename"])
