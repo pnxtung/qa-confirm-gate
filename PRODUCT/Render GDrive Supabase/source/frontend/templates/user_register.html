@@ -23,13 +23,22 @@
                 <label class="form-label">Email</label>
                 <input type="email" name="email" required class="form-input">
             </div>
+            {% if not active_teams %}
+            <div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs p-3 rounded mb-3 font-medium">
+                ⚠️ Chưa có phòng ban nào được tạo. Vui lòng liên hệ Admin (ADMINPNX) để khởi tạo phòng ban trước khi đăng ký.
+            </div>
+            {% endif %}
             <div>
                 <label class="form-label">Team</label>
                 <select name="team" required class="form-input">
+                    {% if active_teams %}
                     <option value="" disabled selected>Select a department</option>
                     {% for team in active_teams %}
                     <option value="{{ team.name }}">{{ team.name }}</option>
                     {% endfor %}
+                    {% else %}
+                    <option value="" disabled selected>Chưa có phòng ban (Liên hệ Admin)</option>
+                    {% endif %}
                 </select>
             </div>
             <div>
