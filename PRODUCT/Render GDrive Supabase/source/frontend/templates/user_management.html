@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -268,7 +269,141 @@
                 if (tr.nextElementSibling) {
                     tbody.insertBefore(tr.nextElementSibling, tr);
                 }
+        function exportUsersToExcel() {
+            const tbody = document.getElementById('user-table-body');
+            const rows = tbody.querySelectorAll('tr');
+            if (rows.length === 0) {
+                alert('Không có dữ liệu người dùng để xuất Excel.');
+                return;
+            }
+            
+            const data = [
+                ['Full Name', 'Email', 'Team', 'Employee ID', 'Password', 'Access']
+            ];
+
+            rows.forEach(tr => {
+                const fullname = tr.querySelector('input[name="fullname"]')?.value.trim() || '';
+                const email = tr.querySelector('input[name="email"]')?.value.trim() || '';
+                const team = tr.querySelector('select[name="team"]')?.value.trim() || tr.querySelector('input[name="team"]')?.value.trim() || 'Others';
+                const username = tr.querySelector('input[name="username"]')?.value.trim() || '';
+                const password = tr.querySelector('input[name="password"]')?.value.trim() || '';
+                const access = tr.querySelector('select[name="access_role"]')?.value.trim() || 'Viewer';
+
+                if (fullname || username) {
+                    data.push([fullname, email, team, username, password, access]);
+                }
             });
+
+            const worksheet = XLSX.utils.aoa_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
+
+            const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            XLSX.writeFile(workbook, `Users_List_${today}.xlsx`);
+        }
+
+        function triggerImportExcel() {
+            document.getElementById('excel-file-input').click();
+        }
+
+        function importUsersFromExcel(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+                    if (!jsonData || jsonData.length < 2) {
+                        alert('⚠️ File Excel không có dữ liệu.');
+                        input.value = '';
+                        return;
+                    }
+
+                    const headers = jsonData[0].map(h => String(h || '').trim().toLowerCase());
+                    
+                    const reqHeaders = ['full name', 'email', 'team', 'employee id', 'password', 'access'];
+                    const reqHeadersAlt = ['full name', 'email', 'team', 'username', 'password', 'access'];
+
+                    const hasAll = reqHeaders.every(h => headers.includes(h)) || reqHeadersAlt.every(h => headers.includes(h));
+                    if (!hasAll) {
+                        alert('⚠️ File Excel không đúng định dạng!\nCác cột yêu cầu: Full Name, Email, Team, Employee ID, Password, Access');
+                        input.value = '';
+                        return;
+                    }
+
+                    const fullnameIdx = headers.findIndex(h => h === 'full name');
+                    const emailIdx = headers.findIndex(h => h === 'email');
+                    const teamIdx = headers.findIndex(h => h === 'team');
+                    const usernameIdx = headers.findIndex(h => h === 'employee id' || h === 'username');
+                    const passwordIdx = headers.findIndex(h => h === 'password');
+                    const accessIdx = headers.findIndex(h => h === 'access');
+
+                    const tbody = document.getElementById('user-table-body');
+                    let addedCount = 0;
+
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (!row || row.length === 0) continue;
+
+                        const fullname = String(row[fullnameIdx] || '').trim();
+                        const email = String(row[emailIdx] || '').trim();
+                        const teamVal = String(row[teamIdx] || '').trim() || 'Others';
+                        const username = String(row[usernameIdx] || '').trim();
+                        const password = String(row[passwordIdx] || '').trim();
+                        const accessVal = String(row[accessIdx] || '').trim() || 'Pending';
+
+                        if (!fullname && !username) continue;
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="p-0 border-l-0">
+                                <input type="hidden" name="user_id" value="0">
+                                <input type="text" name="fullname" value="${fullname}" class="excel-input" required>
+                            </td>
+                            <td class="p-0">
+                                <input type="email" name="email" value="${email}" class="excel-input" required>
+                            </td>
+                            <td class="p-0">
+                                <input type="text" name="team" value="${teamVal}" class="excel-input">
+                            </td>
+                            <td class="p-0">
+                                <input type="text" name="username" value="${username}" class="excel-input" required>
+                            </td>
+                            <td class="p-0">
+                                <input type="text" name="password" value="${password}" class="excel-input" required>
+                            </td>
+                            <td class="p-0">
+                                <select name="access_role" class="excel-input">
+                                    <option value="Pending" ${accessVal === 'Pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="Viewer" ${accessVal === 'Viewer' ? 'selected' : ''}>Viewer</option>
+                                    <option value="OQA" ${accessVal === 'OQA' ? 'selected' : ''}>OQA</option>
+                                    <option value="Main PIC" ${accessVal === 'Main PIC' ? 'selected' : ''}>Main PIC</option>
+                                    <option value="Admin" ${accessVal === 'Admin' ? 'selected' : ''}>Admin</option>
+                                </select>
+                            </td>
+                            <td class="p-0 border-r-0 text-center">
+                                <input type="checkbox" class="w-4 h-4 cursor-pointer user-select-checkbox">
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                        addedCount++;
+                    }
+
+                    alert(`✅ Đã nạp thành công ${addedCount} người dùng từ file Excel.\nNhấn nút "Save User" để lưu vào Cơ sở dữ liệu.`);
+                    input.value = '';
+
+                } catch (err) {
+                    console.error('Error parsing Excel:', err);
+                    alert('⚠️ Đã xảy ra lỗi khi đọc file Excel. Vui lòng kiểm tra lại file.');
+                    input.value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
         }
     </script>
 </head>
@@ -471,6 +606,13 @@
                 </button>
                 <button type="button" onclick="deleteSelectedUsers()" class="btn-primary shrink-0">
                     - Remove User
+                </button>
+                <input type="file" id="excel-file-input" accept=".xlsx, .xls" class="hidden" onchange="importUsersFromExcel(this)">
+                <button type="button" onclick="triggerImportExcel()" class="btn-primary shrink-0 !bg-emerald-600 hover:!bg-emerald-700">
+                    📥 Import Excel
+                </button>
+                <button type="button" onclick="exportUsersToExcel()" class="btn-primary shrink-0 !bg-emerald-600 hover:!bg-emerald-700">
+                    📤 Export Excel
                 </button>
                 <button type="submit" class="btn-primary shrink-0 ml-auto">
                     Save User
