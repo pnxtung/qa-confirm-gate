@@ -332,7 +332,10 @@ def api_create_version(request: Request, model_checklist_id: int):
                 old_filepath = f["filepath"]
                 new_filepath = StorageAdapter.get_supabase_file_path(model_name, team, level_1, level_2, next_ver, f["filename"])
                 if old_filepath:
-                    StorageAdapter.copy_file(old_filepath, new_filepath)
+                    try:
+                        StorageAdapter.copy_file(old_filepath, new_filepath)
+                    except Exception as ex:
+                        logger.warning(f"Failed to copy file {old_filepath}: {ex}")
                 cursor.execute("""
                     INSERT INTO document_files (version_id, filename, filepath, file_size, uploaded_at)
                     VALUES (?, ?, ?, ?, ?)
@@ -341,15 +344,24 @@ def api_create_version(request: Request, model_checklist_id: int):
             # Copy content.html
             old_html_path = StorageAdapter.get_supabase_html_path(model_name, team, level_1, level_2, latest_v["version_no"])
             new_html_path = StorageAdapter.get_supabase_html_path(model_name, team, level_1, level_2, next_ver)
-            StorageAdapter.copy_file(old_html_path, new_html_path)
+            try:
+                StorageAdapter.copy_file(old_html_path, new_html_path)
+            except Exception as ex:
+                logger.warning(f"Failed to copy html {old_html_path}: {ex}")
         else:
             # Copy V00 content.html if exists
             v00_html_path = StorageAdapter.get_supabase_html_path(model_name, team, level_1, level_2, "V00")
             new_html_path = StorageAdapter.get_supabase_html_path(model_name, team, level_1, level_2, next_ver)
-            StorageAdapter.copy_file(v00_html_path, new_html_path)
+            try:
+                StorageAdapter.copy_file(v00_html_path, new_html_path)
+            except Exception as ex:
+                logger.warning(f"Failed to copy V00 html: {ex}")
 
         conn.commit()
         return {"success": True, "version_id": new_version_id, "version_no": next_ver}
+    except Exception as e:
+        conn.rollback()
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
     finally:
         conn.close()
 

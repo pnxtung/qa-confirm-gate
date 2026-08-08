@@ -555,8 +555,17 @@
             btnAddFile.classList.remove('bg-gray-400', 'text-gray-700', 'cursor-not-allowed');
         }
 
-        if (tinyEditor) tinyEditor.mode.set('design');
-        if (tinyEditor) tinyEditor.focus();
+        if (tinyEditor) {
+            try {
+                tinyEditor.mode.set('design');
+                if (tinyEditor.getBody()) {
+                    tinyEditor.getBody().setAttribute('contenteditable', 'true');
+                }
+                tinyEditor.focus();
+            } catch (e) {
+                console.error("TinyMCE enable edit error:", e);
+            }
+        }
         
         // Also enable the Add Step button if IS_UPLOADER
         isEditingMode = true;
@@ -588,12 +597,12 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content: '' })
             });
-            if (res.ok) {
+            const data = await res.json();
+            if (res.ok && data.success) {
                 await loadData(true);
                 startLockCountdown();
             } else {
-                const text = await res.text();
-                alert("Lỗi server: " + res.status + " " + text);
+                alert("Lỗi tạo version: " + (data.error || res.status));
             }
         } catch (e) {
             alert("Lỗi kết nối/trình duyệt: " + e.message);
