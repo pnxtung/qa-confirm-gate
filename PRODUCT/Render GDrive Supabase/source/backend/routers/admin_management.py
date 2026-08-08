@@ -137,7 +137,10 @@ async def bulk_update(request: Request):
             # Duplicate against existing database users (if new user row or changed to an ID belonging to another user)
             if clean_u in existing_db_users:
                 owner_id = existing_db_users[clean_u]
-                if curr_id == 0 or owner_id != curr_id:
+                if curr_id == 0:
+                    # User imported from Excel (or newly typed) but username exists. Map it to existing user.
+                    pass
+                elif owner_id != curr_id:
                     conn.close()
                     return {"success": False, "error": f"Employee ID already exists: {u_username}"}
 
@@ -154,6 +157,10 @@ async def bulk_update(request: Request):
 
             if not u_username or u_username.upper() == 'ADMINPNX':
                 continue
+
+            clean_u = u_username.lower()
+            if curr_id == 0 and clean_u in existing_db_users:
+                curr_id = existing_db_users[clean_u]
 
             if curr_id > 0:
                 cursor.execute("""
