@@ -1,7 +1,7 @@
 import os
 import re
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import DictCursor
 from backend.core.config import MP_READINESS_DATA_PATH, DB_URL
 
 class IntegrityError(Exception):
@@ -54,7 +54,7 @@ class PgConnectionWrapper:
         self._conn = conn
 
     def cursor(self):
-        return PgCursorWrapper(self._conn.cursor(cursor_factory=RealDictCursor))
+        return PgCursorWrapper(self._conn.cursor(cursor_factory=DictCursor))
 
     def commit(self):
         self._conn.commit()
