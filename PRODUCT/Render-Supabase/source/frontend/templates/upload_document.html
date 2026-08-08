@@ -259,7 +259,6 @@
             };
             reader.readAsDataURL(file);
         }),
-        readonly: true,
         height: '100%',
         promotion: false,
         branding: false,
@@ -269,6 +268,12 @@
             editor.on('init', function () {
                 if (typeof currentVersion !== 'undefined' && currentVersion) {
                     editor.setContent(currentVersion.content || '');
+                }
+                if (typeof isEditingMode !== 'undefined' && isEditingMode) {
+                    editor.mode.set('design');
+                    try { editor.getBody().setAttribute('contenteditable', 'true'); } catch(e){}
+                } else {
+                    editor.mode.set('readonly');
                 }
             });
         }

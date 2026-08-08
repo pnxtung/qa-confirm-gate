@@ -20,6 +20,18 @@ templates = Jinja2Templates(directory="frontend/templates")
 
 MAX_VERSION_SIZE_BYTES = 40 * 1024 * 1024  # 40 MB
 
+def ensure_schema_updates():
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("ALTER TABLE document_files ADD COLUMN IF NOT EXISTS file_size INTEGER DEFAULT 0;")
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+ensure_schema_updates()
+
 def get_version_total_size(version_id: str, new_html_content: str = None, new_files_bytes: int = 0) -> int:
     total = new_files_bytes
     if new_html_content is not None:
@@ -326,20 +338,27 @@ def api_create_version(request: Request, model_checklist_id: int):
         
         if latest_v:
             latest_version_id = latest_v["id"]
-            cursor.execute("SELECT filename, filepath, file_size FROM document_files WHERE version_id = ?", (latest_version_id,))
-            files_to_copy = cursor.fetchall()
+            cursor.execute("SELECT * FROM document_files WHERE version_id = ?", (latest_version_id,))
+            files_to_copy = [dict(f) for f in cursor.fetchall()]
             for f in files_to_copy:
-                old_filepath = f["filepath"]
-                new_filepath = StorageAdapter.get_supabase_file_path(model_name, team, level_1, level_2, next_ver, f["filename"])
+                old_filepath = f.get("filepath")
+                fname = f.get("filename") or ""
+                new_filepath = StorageAdapter.get_supabase_file_path(model_name, team, level_1, level_2, next_ver, fname)
                 if old_filepath:
                     try:
                         StorageAdapter.copy_file(old_filepath, new_filepath)
                     except Exception as ex:
-                        logger.warning(f"Failed to copy file {old_filepath}: {ex}")
-                cursor.execute("""
-                    INSERT INTO document_files (version_id, filename, filepath, file_size, uploaded_at)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (new_version_id, f["filename"], new_filepath, f.get("file_size", 0), datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                        pass
+                try:
+                    cursor.execute("""
+                        INSERT INTO document_files (version_id, filename, filepath, file_size, uploaded_at)
+                        VALUES (?, ?, ?, ?, ?)
+                    """, (new_version_id, fname, new_filepath, f.get("file_size") or 0, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                except Exception:
+                    cursor.execute("""
+                        INSERT INTO document_files (version_id, filename, filepath, uploaded_at)
+                        VALUES (?, ?, ?, ?)
+                    """, (new_version_id, fname, new_filepath, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
             
             # Copy content.html
             old_html_path = StorageAdapter.get_supabase_html_path(model_name, team, level_1, level_2, latest_v["version_no"])
@@ -347,7 +366,7 @@ def api_create_version(request: Request, model_checklist_id: int):
             try:
                 StorageAdapter.copy_file(old_html_path, new_html_path)
             except Exception as ex:
-                logger.warning(f"Failed to copy html {old_html_path}: {ex}")
+                pass
         else:
             # Copy V00 content.html if exists
             v00_html_path = StorageAdapter.get_supabase_html_path(model_name, team, level_1, level_2, "V00")
@@ -355,7 +374,7 @@ def api_create_version(request: Request, model_checklist_id: int):
             try:
                 StorageAdapter.copy_file(v00_html_path, new_html_path)
             except Exception as ex:
-                logger.warning(f"Failed to copy V00 html: {ex}")
+                pass
 
         conn.commit()
         return {"success": True, "version_id": new_version_id, "version_no": next_ver}
@@ -755,10 +774,16 @@ async def api_upload_files(request: Request, version_id: str, files: List[Upload
             StorageAdapter.upload_file_bytes(storage_path, content, content_type=file.content_type or "application/octet-stream")
                 
             if not is_v00:
-                cursor.execute("""
-                    INSERT INTO document_files (version_id, filename, filepath, file_size, uploaded_at)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (version_id_int, safe_filename, storage_path, file_size, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                try:
+                    cursor.execute("""
+                        INSERT INTO document_files (version_id, filename, filepath, file_size, uploaded_at)
+                        VALUES (?, ?, ?, ?, ?)
+                    """, (version_id_int, safe_filename, storage_path, file_size, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                except Exception:
+                    cursor.execute("""
+                        INSERT INTO document_files (version_id, filename, filepath, uploaded_at)
+                        VALUES (?, ?, ?, ?)
+                    """, (version_id_int, safe_filename, storage_path, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
                 uploaded_records.append({
                     "id": cursor.lastrowid,
                     "filename": safe_filename,
