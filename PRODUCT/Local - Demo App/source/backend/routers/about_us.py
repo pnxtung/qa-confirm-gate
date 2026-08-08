@@ -28,8 +28,10 @@ def init_csv():
             writer = csv.writer(f)
             writer.writerow(["ID", "Employee ID", "Timestamp", "Content"])
 
-# Render trang Feedback
+# Render trang Feedback / About Us
 @router.get("/feedback")
+@router.get("/about_us")
+@router.get("/about")
 async def get_feedback(request: Request):
     user = get_current_user(request)
     if not user:
