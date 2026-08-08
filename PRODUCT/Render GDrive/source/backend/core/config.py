@@ -8,10 +8,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 SECRET_KEY = os.getenv("SECRET_KEY", "default_insecure_secret_key")
 
 # Storage Switches
-raw_db_providers = os.getenv("STORAGE_DB_PROVIDER", "LOCAL")
+raw_db_providers = os.getenv("STORAGE_DB_PROVIDER", "GDRIVE")
 STORAGE_DB_PROVIDERS = [p.strip().upper() for p in raw_db_providers.split(",") if p.strip()]
 
-raw_userdata_providers = os.getenv("STORAGE_USERDATA_PROVIDER", "LOCAL")
+raw_userdata_providers = os.getenv("STORAGE_USERDATA_PROVIDER", "GDRIVE")
 STORAGE_USERDATA_PROVIDERS = [p.strip().upper() for p in raw_userdata_providers.split(",") if p.strip()]
 
 SYNC_MODE = os.getenv("SYNC_MODE", "ASYNC").strip().upper()
