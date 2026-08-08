@@ -70,6 +70,24 @@ async def post_login(
         return templates.TemplateResponse(request=request, name="login.html", context={"error": "Waiting for Admin to approve access"})
 
     token = create_token(user["username"])
+    
+    # Ghi nhận lượt truy cập vào bảng access_logs
+    import datetime
+    try:
+        conn2 = get_db()
+        cur2 = conn2.cursor()
+        today = datetime.date.today().isoformat()
+        cur2.execute("SELECT access_count FROM access_logs WHERE access_date = ?", (today,))
+        row = cur2.fetchone()
+        if row:
+            cur2.execute("UPDATE access_logs SET access_count = access_count + 1 WHERE access_date = ?", (today,))
+        else:
+            cur2.execute("INSERT INTO access_logs (access_date, access_count) VALUES (?, 1)", (today,))
+        conn2.commit()
+        conn2.close()
+    except Exception:
+        pass
+    
     response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
     response.set_cookie(key="access_token", value=token, httponly=True, samesite="lax")
     return response
