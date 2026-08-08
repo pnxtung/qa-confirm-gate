@@ -164,6 +164,7 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="p-0 border-l-0">
+                    <input type="hidden" name="user_id" value="">
                     <input type="text" name="fullname" value="" class="excel-input" required>
                 </td>
                 <td class="p-0">
@@ -416,6 +417,7 @@
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
                             <td class="p-0 border-l-0">
+                                <input type="hidden" name="user_id" value="">
                                 <input type="text" name="fullname" value="${fullname}" class="excel-input">
                             </td>
                             <td class="p-0">
@@ -614,6 +616,7 @@
                             {% for user in users %}
                             <tr>
                                 <td class="p-0 border-l-0">
+                                    <input type="hidden" name="user_id" value="{{ user.id }}">
                                     <input type="text" name="fullname" value="{{ user.fullname }}" class="excel-input" {% if not can_edit %}readonly{% endif %}>
                                 </td>
                                 <td class="p-0">
