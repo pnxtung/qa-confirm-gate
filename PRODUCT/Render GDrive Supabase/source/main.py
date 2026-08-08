@@ -87,13 +87,6 @@ async def startup_event():
         cursor.execute("INSERT INTO users (fullname, email, team, username, password, access_role) VALUES (?, ?, ?, ?, ?, ?)",
                        ("Admin", "admin@domain.com", "Admin", "ADMINPNX", "adminpnx", "Admin"))
         conn.commit()
-    
-    cursor.execute("SELECT COUNT(*) FROM teams")
-    if cursor.fetchone()[0] == 0:
-        default_teams = ['App Insp', 'CS', 'DQA', 'Final Insp', 'Integrated', 'OQA', 'Planning', 'Process DEV', 'Production', 'RnD', 'SQA', 'Tech 1', 'Tech 2']
-        for t in default_teams:
-            cursor.execute("INSERT INTO teams (name, active) VALUES (?, ?)", (t, 'Yes'))
-        conn.commit()
         
     conn.close()
 
