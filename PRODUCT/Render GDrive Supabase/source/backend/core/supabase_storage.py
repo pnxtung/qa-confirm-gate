@@ -224,11 +224,11 @@ def restore_database_from_supabase(db_path: str):
             cols = list(rows[0].keys())
             placeholders = ", ".join(["?"] * len(cols))
             col_names = ", ".join(cols)
-            cursor.execute(f"DELETE FROM {table}")
+            # Use INSERT OR REPLACE without DELETE to preserve local records
             for r in rows:
                 cursor.execute(f"INSERT OR REPLACE INTO {table} ({col_names}) VALUES ({placeholders})", [r[c] for c in cols])
             conn.commit()
-            logger.info(f"[SUPABASE RESTORE] Restored {len(rows)} rows into local table '{table}'")
+            logger.info(f"[SUPABASE RESTORE] Restored/Merged {len(rows)} rows into local table '{table}'")
         except Exception as e:
             logger.error(f"[SUPABASE RESTORE ERROR] {table}: {e}")
 
