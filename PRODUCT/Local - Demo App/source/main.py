@@ -8,8 +8,8 @@ from backend.routers.dashboard import router as dashboard_router
 from backend.routers.admin_management import router as admin_management_router
 from backend.routers.model_config import router as model_config_router
 from backend.routers.upload_document import router as upload_document_router
+from backend.routers.about_us import router as about_us_router
 from backend.core.config import DB_PATH, MP_READINESS_DATA_PATH, V00_TEMPLATES_PATH
-from backend.core.storage_adapter import StorageAdapter
 
 app = FastAPI(title="QA Confirm Gate")
 
@@ -26,9 +26,6 @@ async def startup_event():
         os.makedirs(db_dir, exist_ok=True)
     os.makedirs(MP_READINESS_DATA_PATH, exist_ok=True)
     os.makedirs(V00_TEMPLATES_PATH, exist_ok=True)
-
-    # Tải bản database.db mới nhất từ Google Drive nếu có
-    # Local offline restore not required
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -47,6 +44,24 @@ async def startup_event():
             cursor.execute("INSERT INTO teams (name, active) VALUES (?, ?)", (t, 'Yes'))
         conn.commit()
         
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS site_content (
+        id INTEGER PRIMARY KEY,
+        about_us TEXT
+    )
+    """)
+    cursor.execute("SELECT COUNT(*) FROM site_content")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute("INSERT INTO site_content (id, about_us) VALUES (1, 'Chào mừng bạn đến với hệ thống QA Confirm Gate.')")
+        conn.commit()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS access_logs (
+        access_date DATE UNIQUE,
+        access_count INTEGER DEFAULT 0
+    )
+    """)
+    conn.commit()
     conn.close()
 
 # Gắn kết tất cả routers tính năng
@@ -55,6 +70,7 @@ app.include_router(user_auth_router)
 app.include_router(admin_management_router)
 app.include_router(model_config_router)
 app.include_router(upload_document_router)
+app.include_router(about_us_router)
 
 if __name__ == "__main__":
     import uvicorn
