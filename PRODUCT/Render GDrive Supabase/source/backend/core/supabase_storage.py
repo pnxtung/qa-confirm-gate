@@ -178,6 +178,20 @@ def sync_table_to_supabase(table_name: str, records: list) -> bool:
         "Content-Type": "application/json",
         "Prefer": "resolution=merge-duplicates"
     }
+    
+    # 1. Wipe old data in Supabase (Hard Sync)
+    delete_url = url
+    if table_name == "access_logs":
+        delete_url += "?access_date=not.is.null"
+    else:
+        delete_url += "?id=gt.-1"
+    
+    try:
+        requests.delete(delete_url, headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"}, timeout=10)
+    except Exception as e:
+        logger.error(f"[SUPABASE TABLE WIPE ERROR] {table_name}: {e}")
+
+    # 2. Insert new data
     try:
         resp = requests.post(url, headers=headers, json=records, timeout=10)
         return resp.status_code in (200, 201)
