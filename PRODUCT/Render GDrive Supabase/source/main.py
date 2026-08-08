@@ -87,7 +87,12 @@ async def startup_event():
         cursor.execute("INSERT INTO users (fullname, email, team, username, password, access_role) VALUES (?, ?, ?, ?, ?, ?)",
                        ("Admin", "admin@domain.com", "Admin", "ADMINPNX", "adminpnx", "Admin"))
         conn.commit()
-        
+
+    cursor.execute("SELECT COUNT(*) FROM teams")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute("INSERT INTO teams (name, active) VALUES (?, ?)", ("Others", "Yes"))
+        conn.commit()
+
     conn.close()
 
 # Gắn kết tất cả routers tính năng
