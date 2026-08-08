@@ -27,8 +27,9 @@ async def startup_event():
     os.makedirs(MP_READINESS_DATA_PATH, exist_ok=True)
     os.makedirs(V00_TEMPLATES_PATH, exist_ok=True)
 
-    # Tải bản database.db mới nhất từ Google Drive nếu có
-    restore_database_from_gdrive()
+    # Tải bản database.db mới nhất từ Google Drive nếu provider là GDRIVE
+    if "GDRIVE" in STORAGE_DB_PROVIDERS:
+        restore_database_from_gdrive()
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
