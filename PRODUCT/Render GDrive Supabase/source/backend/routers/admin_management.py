@@ -53,6 +53,7 @@ async def get_admin(request: Request):
 
 # Lưu danh sách Teams mới nhất
 @router.post("/admin/save_teams")
+@router.post("/admin/bulk_update_teams")
 async def save_teams(
     request: Request,
     team_name: List[str] = Form(default=[]),
