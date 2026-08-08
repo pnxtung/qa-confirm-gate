@@ -222,7 +222,7 @@ def restore_database_from_supabase(db_path: str):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    tables = ["users", "teams", "models", "master_checklist", "model_checklist", "document_versions", "document_files", "site_content", "access_logs"]
+    tables = ["users", "teams", "models", "master_checklist", "model_checklist", "document_versions", "document_files", "confirmation_progress", "site_content", "access_logs"]
 
     for table in tables:
         rows = fetch_table_from_supabase(table)
@@ -249,7 +249,7 @@ def sync_database_to_supabase(db_path: str):
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
-    tables = ["users", "teams", "models", "master_checklist", "model_checklist", "document_versions", "document_files", "site_content", "access_logs"]
+    tables = ["users", "teams", "models", "master_checklist", "model_checklist", "document_versions", "document_files", "confirmation_progress", "site_content", "access_logs"]
 
     for table in tables:
         try:
