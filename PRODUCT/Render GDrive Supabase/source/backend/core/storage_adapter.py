@@ -2,7 +2,9 @@ import os
 import logging
 from backend.core.config import (
     MP_READINESS_DATA_PATH,
-    V00_TEMPLATES_PATH
+    V00_TEMPLATES_PATH,
+    STORAGE_DB_PROVIDERS,
+    STORAGE_USERDATA_PROVIDERS
 )
 from backend.core.database import sanitize_folder_name
 from backend.core.gdrive_storage import (
@@ -12,6 +14,10 @@ from backend.core.gdrive_storage import (
     create_folder_on_gdrive,
     delete_folder_on_gdrive,
     reconcile_gdrive_model_folders
+)
+from backend.core.supabase_storage import (
+    upload_html_to_supabase,
+    read_html_from_supabase
 )
 from backend.core.gdrive_queue import gdrive_worker_queue
 
@@ -33,7 +39,7 @@ class StorageAdapter:
 
     @classmethod
     def save_document_html(cls, model_name: str, team: str, level_1: str, level_2: str, version_name: str, html_content: str, background_tasks=None) -> bool:
-        # Instant local container save
+        # Instant local container cache save
         try:
             local_file_path = cls.get_local_html_path(model_name, team, level_1, level_2, version_name)
             os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
@@ -42,9 +48,16 @@ class StorageAdapter:
         except Exception as e:
             logger.error(f"[STORAGE LOCAL CACHE ERROR] {e}")
 
-        # Queued background GDrive upload
         rel_path = f"{model_name}/{team}/{level_1}/{level_2}/{version_name}/content.html"
-        gdrive_worker_queue.enqueue(upload_html_content_to_gdrive, rel_path, html_content)
+
+        # 1. Supabase Storage Provider
+        if "SUPABASE" in STORAGE_USERDATA_PROVIDERS:
+            gdrive_worker_queue.enqueue(upload_html_to_supabase, rel_path, html_content)
+
+        # 2. Google Drive Storage Provider
+        if "GDRIVE" in STORAGE_USERDATA_PROVIDERS:
+            gdrive_worker_queue.enqueue(upload_html_content_to_gdrive, rel_path, html_content)
+
         return True
 
     @classmethod
@@ -54,40 +67,62 @@ class StorageAdapter:
             with open(local_file_path, "r", encoding="utf-8") as f:
                 return f.read()
 
-        try:
-            rel_path = f"{model_name}/{team}/{level_1}/{level_2}/{version_name}/content.html"
-            content = read_html_content_from_gdrive(rel_path)
-            if content:
-                try:
-                    os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
-                    with open(local_file_path, "w", encoding="utf-8") as f:
-                        f.write(content)
-                except:
-                    pass
-                return content
-        except Exception as e:
-            logger.error(f"[STORAGE GDRIVE READ ERROR] {e}")
+        rel_path = f"{model_name}/{team}/{level_1}/{level_2}/{version_name}/content.html"
+
+        # 1. Try reading from Supabase if configured
+        if "SUPABASE" in STORAGE_USERDATA_PROVIDERS:
+            try:
+                content = read_html_from_supabase(rel_path)
+                if content:
+                    try:
+                        os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
+                        with open(local_file_path, "w", encoding="utf-8") as f:
+                            f.write(content)
+                    except:
+                        pass
+                    return content
+            except Exception as e:
+                logger.error(f"[STORAGE SUPABASE READ ERROR] {e}")
+
+        # 2. Try reading from Google Drive if configured
+        if "GDRIVE" in STORAGE_USERDATA_PROVIDERS:
+            try:
+                content = read_html_content_from_gdrive(rel_path)
+                if content:
+                    try:
+                        os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
+                        with open(local_file_path, "w", encoding="utf-8") as f:
+                            f.write(content)
+                    except:
+                        pass
+                    return content
+            except Exception as e:
+                logger.error(f"[STORAGE GDRIVE READ ERROR] {e}")
 
         return ""
 
     @classmethod
     def sync_database(cls, background_tasks=None):
-        gdrive_worker_queue.enqueue(sync_database_to_gdrive)
+        if "GDRIVE" in STORAGE_DB_PROVIDERS:
+            gdrive_worker_queue.enqueue(sync_database_to_gdrive)
 
     @classmethod
     def create_model_folder(cls, model_name: str, background_tasks=None):
         if not model_name:
             return
         s_name = sanitize_folder_name(model_name)
-        gdrive_worker_queue.enqueue(create_folder_on_gdrive, s_name)
+        if "GDRIVE" in STORAGE_USERDATA_PROVIDERS:
+            gdrive_worker_queue.enqueue(create_folder_on_gdrive, s_name)
 
     @classmethod
     def delete_model_folder(cls, model_name: str, background_tasks=None):
         if not model_name:
             return
         s_name = sanitize_folder_name(model_name)
-        gdrive_worker_queue.enqueue(delete_folder_on_gdrive, s_name)
+        if "GDRIVE" in STORAGE_USERDATA_PROVIDERS:
+            gdrive_worker_queue.enqueue(delete_folder_on_gdrive, s_name)
 
     @classmethod
     def reconcile_model_folders(cls, active_model_names: list, background_tasks=None):
-        gdrive_worker_queue.enqueue(reconcile_gdrive_model_folders, active_model_names)
+        if "GDRIVE" in STORAGE_USERDATA_PROVIDERS:
+            gdrive_worker_queue.enqueue(reconcile_gdrive_model_folders, active_model_names)

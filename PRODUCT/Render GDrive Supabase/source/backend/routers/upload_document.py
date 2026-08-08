@@ -771,12 +771,19 @@ async def api_upload_files(request: Request, version_id: str, files: List[Upload
             f.write(content)
             
         try:
+            from backend.core.config import STORAGE_USERDATA_PROVIDERS
             from backend.core.gdrive_queue import gdrive_worker_queue
-            from backend.core.gdrive_storage import upload_file_to_gdrive
             rel_path = os.path.relpath(file_path, start=".").replace("\\", "/")
-            gdrive_worker_queue.enqueue(upload_file_to_gdrive, file_path, rel_path)
+            
+            if "SUPABASE" in STORAGE_USERDATA_PROVIDERS:
+                from backend.core.supabase_storage import upload_file_to_supabase
+                gdrive_worker_queue.enqueue(upload_file_to_supabase, file_path, rel_path)
+
+            if "GDRIVE" in STORAGE_USERDATA_PROVIDERS:
+                from backend.core.gdrive_storage import upload_file_to_gdrive
+                gdrive_worker_queue.enqueue(upload_file_to_gdrive, file_path, rel_path)
         except Exception as e:
-            print(f"[GDRIVE SYNC ERROR] {e}")
+            print(f"[STORAGE FILE SYNC ERROR] {e}")
             
         if not is_v00:
             cursor.execute("""
