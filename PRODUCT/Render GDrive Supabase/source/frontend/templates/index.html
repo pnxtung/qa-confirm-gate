@@ -438,15 +438,15 @@
                         return;
                     }
                     // Pre-sort: group items by team (preserving API team order), then level_1, then level_2
-                    const teamOrder = {};
+                    const sortTeamOrder = {};
                     let tIdx = 0;
                     items.forEach(item => {
-                        if (!(item.team in teamOrder)) {
-                            teamOrder[item.team] = tIdx++;
+                        if (!(item.team in sortTeamOrder)) {
+                            sortTeamOrder[item.team] = tIdx++;
                         }
                     });
                     items.sort((a, b) => {
-                        if (teamOrder[a.team] !== teamOrder[b.team]) return teamOrder[a.team] - teamOrder[b.team];
+                        if (sortTeamOrder[a.team] !== sortTeamOrder[b.team]) return sortTeamOrder[a.team] - sortTeamOrder[b.team];
                         if (a.level_1 < b.level_1) return -1;
                         if (a.level_1 > b.level_1) return 1;
                         if (a.level_2 < b.level_2) return -1;
