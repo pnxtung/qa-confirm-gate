@@ -350,10 +350,6 @@ async def api_get_model_checklist(request: Request, model_id: int):
             
         if user_team and item['team'] == user_team:
             item['role'] = 'Uploader'
-        elif user_team and latest_v:
-            cursor.execute("SELECT id FROM confirmation_progress WHERE version_id = ? AND team_name = ?", (latest_v['id'], user_team))
-            if cursor.fetchone():
-                item['role'] = 'Approver'
                     
     conn.close()
     return items
