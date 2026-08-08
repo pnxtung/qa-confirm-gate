@@ -31,7 +31,7 @@ async def get_admin(request: Request):
             locked_by = row['last_updated_by']
             locked_at = row['config_updated_at']
             
-    cursor.execute("SELECT * FROM users WHERE username != 'ADMINPNX'")
+    cursor.execute("SELECT * FROM users WHERE username != 'ADMINPNX' ORDER BY id ASC")
     users = [dict(u) for u in cursor.fetchall()]
     cursor.execute("SELECT * FROM teams")
     teams = [dict(t) for t in cursor.fetchall()]
@@ -105,7 +105,6 @@ async def bulk_update(request: Request):
         
     try:
         form_data = await request.form()
-        user_ids = form_data.getlist("user_id")
         fullnames = form_data.getlist("fullname")
         emails = form_data.getlist("email")
         teams = form_data.getlist("team")
@@ -113,35 +112,25 @@ async def bulk_update(request: Request):
         passwords = form_data.getlist("password")
         access_roles = form_data.getlist("access_role")
 
-        # 1. Load existing non-ADMINPNX users from CSDL before making any modifications
-        cursor.execute("SELECT id, username FROM users WHERE username != 'ADMINPNX'")
-        existing_db_users = {row[1].strip().lower(): row[0] for row in cursor.fetchall() if row[1]}
-
-        # 2. Check for duplicate usernames within the submitted form AND against existing database users
+        # 1. Check duplicate usernames within the submitted form / Excel table
         seen_in_form = set()
-        for i in range(max(len(usernames), len(fullnames))):
-            u_username = usernames[i].strip() if i < len(usernames) else ""
-            if not u_username or u_username.upper() == 'ADMINPNX':
+        for i, u in enumerate(usernames):
+            clean_u = u.strip().lower()
+            curr_id = int(ids[i]) if i < len(ids) and ids[i].isdigit() else 0
+            if not clean_u or clean_u == 'adminpnx':
                 continue
-            
-            clean_u = u_username.lower()
-            curr_id = int(user_ids[i]) if (i < len(user_ids) and str(user_ids[i]).isdigit()) else 0
-
-            # Duplicate inside submitted form itself
-            if clean_u in seen_in_form:
-                conn.close()
-                return {"success": False, "error": f"Employee ID already exists: {u_username}"}
-            seen_in_form.add(clean_u)
-
-            # Duplicate against existing database users (if new user row or changed to an ID belonging to another user)
             if clean_u in existing_db_users:
                 owner_id = existing_db_users[clean_u]
-                if curr_id == 0 or owner_id != curr_id:
+                if curr_id == 0:
+                    pass
+                elif owner_id != curr_id:
                     conn.close()
-                    return {"success": False, "error": f"Employee ID already exists: {u_username}"}
+                    return {"success": False, "error": f"Employee ID already exists: {u.strip()}"}
 
-        # 3. All validations passed! Perform database updates and inserts
-        submitted_user_ids = []
+        # 2. Xóa sạch dữ liệu user cũ (trừ ADMINPNX), nạp dữ liệu mới từ bảng/Excel
+        cursor.execute("DELETE FROM users WHERE username != 'ADMINPNX'")
+
+        # 3. Nạp lần lượt từng dòng theo đúng thứ tự từ trên xuống dưới
         for i in range(max(len(usernames), len(fullnames))):
             u_fullname = fullnames[i].strip() if i < len(fullnames) else ""
             u_email = emails[i].strip() if i < len(emails) else ""
@@ -149,31 +138,19 @@ async def bulk_update(request: Request):
             u_username = usernames[i].strip() if i < len(usernames) else ""
             u_password = passwords[i].strip() if i < len(passwords) else "123456"
             u_access = access_roles[i].strip() if i < len(access_roles) else "Pending"
-            curr_id = int(user_ids[i]) if (i < len(user_ids) and str(user_ids[i]).isdigit()) else 0
+            curr_id = int(ids[i]) if i < len(ids) and ids[i].isdigit() else 0
 
             if not u_username or u_username.upper() == 'ADMINPNX':
                 continue
 
-            if curr_id > 0:
-                cursor.execute("""
-                    UPDATE users 
-                    SET fullname=?, email=?, team=?, username=?, password=?, access_role=?
-                    WHERE id=?
-                """, (u_fullname, u_email, u_team, u_username, u_password, u_access, curr_id))
-                submitted_user_ids.append(curr_id)
-            else:
-                cursor.execute("""
-                    INSERT INTO users (fullname, email, team, username, password, access_role)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """, (u_fullname, u_email, u_team, u_username, u_password, u_access))
-                submitted_user_ids.append(cursor.lastrowid)
+            clean_u = u_username.lower()
+            if curr_id == 0 and clean_u in existing_db_users:
+                curr_id = existing_db_users[clean_u]
 
-        # Delete any users removed from table
-        if submitted_user_ids:
-            placeholders = ",".join("?" * len(submitted_user_ids))
-            cursor.execute(f"DELETE FROM users WHERE username != 'ADMINPNX' AND id NOT IN ({placeholders})", submitted_user_ids)
-        else:
-            cursor.execute("DELETE FROM users WHERE username != 'ADMINPNX'")
+            cursor.execute("""
+                INSERT INTO users (fullname, email, team, username, password, access_role)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (u_fullname, u_email, u_team, u_username, u_password, u_access))
 
         conn.commit()
         conn.close()
@@ -184,7 +161,7 @@ async def bulk_update(request: Request):
         print("Bulk update error:", e)
         try: conn.rollback(); conn.close()
         except: pass
-        return {"success": False, "error": f"Employee ID already exists."}
+        return {"success": False, "error": f"Lỗi lưu người dùng: {str(e)}"}
 
 # Xóa một User
 @router.post("/admin/delete_user/{target_id}")

@@ -17,6 +17,13 @@ async def get_dashboard(request: Request):
     conn = get_db()
     cursor = conn.cursor()
     
+    # Ghi nhận lượt truy cập (Access Log)
+    import datetime
+    today = datetime.date.today().isoformat()
+    cursor.execute("INSERT OR IGNORE INTO access_logs (access_date, access_count) VALUES (?, 0)", (today,))
+    cursor.execute("UPDATE access_logs SET access_count = access_count + 1 WHERE access_date = ?", (today,))
+    conn.commit()
+    
     cursor.execute("SELECT * FROM models ORDER BY sort_order ASC, id ASC")
     models = [dict(m) for m in cursor.fetchall()]
     
@@ -37,3 +44,5 @@ async def get_dashboard(request: Request):
         name="index.html", 
         context={"current_user": dict(user), "models": models, "active_models": active_models}
     )
+
+

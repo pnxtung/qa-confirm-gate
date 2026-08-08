@@ -1,0 +1,18 @@
+-- ========================================================
+-- SCRIPT MỞ QUYỀN VÀ TẮT RLS TOÀN BỘ CÁC BẢNG TRÊN SUPABASE
+-- Chạy script này tại Supabase -> SQL Editor -> Run
+-- ========================================================
+
+ALTER TABLE IF EXISTS users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS teams DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS models DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS master_checklist DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS model_checklist DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS document_versions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS document_files DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS confirmation_progress DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS site_content DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS access_logs DISABLE ROW LEVEL SECURITY;
+
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;

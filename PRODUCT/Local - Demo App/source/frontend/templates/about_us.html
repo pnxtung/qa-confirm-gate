@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA Confirm Gate - Feedback</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/script.js"></script>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+    <!-- Mobile Header -->
+    <header class="md:hidden bg-[#0a192f] text-white h-14 flex items-center justify-between px-4 shrink-0 shadow-md z-30">
+        <div class="flex items-center space-x-3">
+            <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="p-1.5 rounded-md hover:bg-slate-800 focus:outline-none border border-slate-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <span class="font-bold tracking-wide text-base">QA Confirm Gate</span>
+        </div>
+        <div class="text-xs font-semibold bg-slate-800 px-2.5 py-1 rounded-full text-slate-200 border border-slate-700">
+            {{ current_user.fullname if current_user else 'Guest' }}
+        </div>
+    </header>
+
+    <!-- Mobile Drawer Overlay -->
+    <div id="mobile-menu-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden transition-opacity"></div>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        <aside id="main-sidebar" class="fixed inset-y-0 left-0 z-50 w-64 border-r border-gray-400 flex flex-col shrink-0 sidebar -translate-x-full transition-transform duration-300 md:relative md:translate-x-0">
+            <div class="h-16 flex items-center px-4 border-b border-gray-400">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="text-lg font-bold tracking-wide">QA Confirm Gate</span>
+            </div>
+            <div class="flex-1 py-4 space-y-1">
+                <a href="/" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span>Home</span>
+                </a>
+                <a href="/upload" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <span>Upload Documents</span>
+                </a>
+                <a href="/setting" class="flex items-center space-x-3 px-4 py-3 mx-2 text-black font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>Model Config</span>
+                </a>
+                <a href="/feedback" class="flex items-center space-x-3 px-4 py-3 bg-[#0a192f] text-white mx-2 rounded-md font-bold shadow">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    <span>About Us</span>
+                </a>
+                {% if current_user and current_user.access_role == 'Admin' %}
+                <a href="/admin" class="flex items-center space-x-3 px-4 py-3 mx-2 text-red-600 font-bold hover:bg-gray-300 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <span>Admin Management</span>
+                </a>
+                {% endif %}
+            </div>
+            <div class="mt-auto border-t border-gray-400 p-4 flex items-center space-x-3 bg-white">
+                <div class="w-10 h-10 rounded-full border border-black flex items-center justify-center font-bold text-sm bg-gray-100">
+                    AD
+                </div>
+                <div class="text-sm">
+                    <p class="font-bold">{{ current_user.fullname if current_user else 'Guest' }}</p>
+                    <p class="text-gray-600 text-xs">{{ current_user.email if current_user else 'guest@domain.com' }}</p>
+                </div>
+            </div>
+            <form action="/logout" method="POST" class="m-0 border-t border-gray-400 bg-[#cbd5e1] p-3">
+                <button type="submit" class="w-full flex items-center space-x-3 font-bold text-black hover:text-gray-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </aside>
+        
+        <main class="flex-1 overflow-y-auto p-4 pb-12 flex flex-col gap-6 bg-[#f1f5f9] scrollbar-custom min-h-0">
+            <!-- Header -->
+            <div class="flex items-center justify-between gap-2 max-lg:gap-1 mb-0 shrink-0 overflow-x-auto whitespace-nowrap no-scrollbar">
+                <div class="flex items-center space-x-2 shrink-0">
+                    <svg class="w-6 h-6 max-lg:w-5 max-lg:h-5 text-gray-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    <span class="text-xl max-lg:text-base font-bold tracking-wide shrink-0">About Us</span>
+                </div>
+            </div>
+
+            <!-- Top Row: About Us & Stats -->
+            <div class="flex flex-col lg:flex-row gap-4 w-full shrink-0">
+                <!-- About Us -->
+                <div class="flex-1 flex flex-col gap-2">
+                    <textarea id="about-us-text" class="w-full flex-1 border-2 border-gray-300 rounded-xl p-4 text-sm focus:outline-none focus:border-blue-500 resize-none min-h-[80px] shadow-sm bg-white" {% if current_user.username != 'ADMINPNX' %}readonly class="!bg-gray-50"{% else %}onblur="saveAboutUs()"{% endif %}></textarea>
+                </div>
+
+                <!-- Stats -->
+                <div class="flex items-stretch gap-2 shrink-0 lg:w-[350px]">
+                    <div class="flex-1 border-2 border-[#0a192f] rounded-xl p-3 text-center bg-white shadow-sm flex flex-col justify-center">
+                        <p class="text-xs font-bold mb-2 text-left">Total Access</p>
+                        <p id="total-access" class="text-3xl font-bold text-[#0a192f]">0</p>
+                    </div>
+                    <div class="flex-1 border-2 border-[#0a192f] rounded-xl p-3 text-center bg-white shadow-sm flex flex-col justify-center">
+                        <p class="text-xs font-bold mb-2 text-left">This Month</p>
+                        <p id="this-month" class="text-3xl font-bold text-[#0a192f]">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row: Feedback List & Input -->
+            <div class="border-box p-4 flex flex-col flex-1 shadow-sm min-h-[400px]">
+                <div class="font-bold text-sm mb-3 flex items-center gap-2 text-gray-800 border-b border-gray-200 pb-2 shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    Feedback
+                </div>
+                
+                <!-- List -->
+                <div id="feedback-list" class="flex-1 overflow-y-auto flex flex-col gap-4 py-2 pr-2 scrollbar-custom mb-4">
+                    <div class="text-center text-sm text-gray-500 py-10">Loading feedbacks...</div>
+                </div>
+
+                <!-- Input -->
+                <div class="flex items-center gap-3 shrink-0 pt-3 border-t border-gray-200">
+                    <div class="flex-1 relative h-[44px]">
+                        <input type="text" id="feedback-input" class="w-full h-full form-input !py-2.5 !pr-16" placeholder="Write your feedback here..." oninput="updateCharCount(this)" maxlength="1000" onkeydown="if(event.key==='Enter') submitFeedback()">
+                        <div class="absolute bottom-1 right-2 text-[10px] text-gray-400 font-bold bg-white px-1"><span id="char-count">0</span>/1000</div>
+                    </div>
+                    <button onclick="submitFeedback()" class="btn-primary !h-[44px] !px-8 !rounded-lg text-sm bg-[#0a192f]">
+                        Sent
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile bottom spacer -->
+            <div class="h-24 shrink-0 md:hidden"></div>
+        </main>
+    </div>
+
+    <script>
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('main-sidebar');
+            const overlay = document.getElementById('mobile-menu-overlay');
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            }
+        }
+
+        function updateCharCount(el) {
+            let val = el.value;
+            if (val.length > 1000) {
+                el.value = val.substring(0, 1000);
+                val = el.value;
+            }
+            document.getElementById('char-count').innerText = val.length;
+        }
+
+        const currentUser = "{{ current_user.username }}";
+
+        async function loadFeedbackData() {
+            try {
+                const res = await fetch('/api/feedback/data');
+                if (!res.ok) throw new Error("Failed to load data");
+                const data = await res.json();
+                
+                document.getElementById('about-us-text').value = data.about_us || "";
+                document.getElementById('total-access').innerText = data.total_access || "0";
+                document.getElementById('this-month').innerText = data.this_month || "0";
+                
+                const listEl = document.getElementById('feedback-list');
+                listEl.innerHTML = "";
+                
+                if (data.feedbacks && data.feedbacks.length > 0) {
+                    data.feedbacks.forEach(fb => {
+                        const deleteBtn = (currentUser === 'ADMINPNX') ? 
+                            `<button onclick="deleteFeedback('${fb.id}')" class="text-gray-400 hover:text-red-600 font-bold px-2 py-1 leading-none rounded">&times;</button>` : '';
+
+                        const safeContent = fb.content
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/"/g, '&quot;')
+                            .replace(/'/g, '&#39;')
+                            .replace(/[\r\n]+/g, ' ');
+
+                        listEl.innerHTML += `
+                        <div class="flex items-start justify-between gap-2 border-b border-gray-100 py-2">
+                            <div class="flex-1 min-w-0 text-sm leading-relaxed">
+                                <span class="font-bold text-[#0a192f] inline-block mr-2">${fb.employee_id}</span>
+                                <span class="text-xs text-gray-400 inline-block mr-2">${fb.time}</span>
+                                <span class="text-gray-700 break-words">${safeContent}</span>
+                            </div>
+                            <div class="shrink-0">
+                                ${deleteBtn}
+                            </div>
+                        </div>
+                        `;
+                    });
+                } else {
+                    listEl.innerHTML = '<div class="text-center text-sm text-gray-500 py-10">No feedbacks yet.</div>';
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Error loading data");
+            }
+        }
+
+        async function saveAboutUs() {
+            const content = document.getElementById('about-us-text').value;
+            try {
+                const res = await fetch('/api/feedback/about', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({content: content})
+                });
+                if (!res.ok) {
+                    console.error("Error saving About Us");
+                }
+            } catch (err) {
+                console.error("Network Error", err);
+            }
+        }
+
+        async function submitFeedback() {
+            const el = document.getElementById('feedback-input');
+            const content = el.value.trim().replace(/\n/g, ' ');
+            if (!content) return;
+            
+            try {
+                const res = await fetch('/api/feedback/submit', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({content: content})
+                });
+                if (res.ok) {
+                    el.value = "";
+                    updateCharCount(el);
+                    loadFeedbackData();
+                } else {
+                    try {
+                        const data = await res.json();
+                        alert(data.message || "Failed to submit feedback");
+                    } catch (e) {
+                        alert("Failed to submit feedback");
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Error submitting feedback");
+            }
+        }
+
+        async function deleteFeedback(id) {
+            if (!confirm("Bạn có chắc chắn muốn xóa feedback này không?")) return;
+            try {
+                const res = await fetch(`/api/feedback/${id}`, {
+                    method: 'DELETE'
+                });
+                if (res.ok) {
+                    loadFeedbackData();
+                } else {
+                    alert("Failed to delete feedback");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', loadFeedbackData);
+    </script>
+</body>
+</html>
