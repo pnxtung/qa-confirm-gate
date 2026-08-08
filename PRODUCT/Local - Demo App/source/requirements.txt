@@ -2,5 +2,6 @@ fastapi
 uvicorn
 jinja2
 python-multipart
-python-dotenvpsycopg2-binary
+python-dotenv
+psycopg2-binary
 supabase
