@@ -1,8 +1,16 @@
 import os
 import re
 import psycopg2
+from psycopg2 import pool
 from psycopg2.extras import DictCursor
 from backend.core.config import MP_READINESS_DATA_PATH, DB_URL
+
+db_pool = None
+
+def init_db_pool():
+    global db_pool
+    if db_pool is None:
+        db_pool = pool.ThreadedConnectionPool(1, 15, DB_URL, connect_timeout=10)
 
 class IntegrityError(Exception):
     pass
@@ -52,6 +60,7 @@ class PgCursorWrapper:
 class PgConnectionWrapper:
     def __init__(self, conn):
         self._conn = conn
+        self._closed = False
 
     def cursor(self):
         return PgCursorWrapper(self._conn.cursor(cursor_factory=DictCursor))
@@ -63,11 +72,30 @@ class PgConnectionWrapper:
         self._conn.rollback()
 
     def close(self):
-        self._conn.close()
+        if not self._closed:
+            try:
+                self._conn.rollback() # Ensure no pending transaction before returning to pool
+            except:
+                pass
+            global db_pool
+            if db_pool:
+                db_pool.putconn(self._conn)
+            else:
+                self._conn.close()
+            self._closed = True
+
+    def __del__(self):
+        try:
+            self.close()
+        except:
+            pass
 
 
 def get_db():
-    conn = psycopg2.connect(DB_URL, connect_timeout=10)
+    global db_pool
+    if db_pool is None:
+        init_db_pool()
+    conn = db_pool.getconn()
     return PgConnectionWrapper(conn)
 
 def sanitize_folder_name(name: str) -> str:
